@@ -1,0 +1,12 @@
+---
+description: Keep COMMANDS.md updated after every test
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+After every tool is tested or fixed, update COMMANDS.md:
+- Move confirmed working tools to ✅ section
+- Move broken tools to ❌ section with error + fix
+- Remove from ⏳ once tested either way
+- Update "Last updated" date on every change
+- Never delete rows — only move them between sections

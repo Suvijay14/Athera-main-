@@ -1,0 +1,20 @@
+---
+description: Record all new work in DEVELOPMENT_LOG.md; copy confirm/passed items into CONFIRMED.md for an outside rebuild.
+alwaysApply: true
+---
+
+# Development log and confirmed rebuild file
+
+The existing JARVIS / Athena / Ember codebase is treated as broken. New work is still recorded here so the same concept can be rebuilt outside this project.
+
+## Always do this
+
+1. After any development (design, code, decisions, experiments), append an entry to `/Users/suvijay/JARVIS/DEVELOPMENT_LOG.md`. Do not bury this log inside `ember/`, `athena-api/`, or `athena-web/`.
+2. When the user says **confirm**, **confirmed**, **pass**, or **passed** about something, copy that item into `/Users/suvijay/JARVIS/CONFIRMED.md`. That file is the rebuild source of truth. Write it so a new project could be built from it alone — concept, behavior, constraints, and decisions — not file paths into the broken app.
+3. Do not mix unconfirmed work into `CONFIRMED.md`. The log can be messy; confirmed items must stay clean and independent.
+
+## Entry format
+
+**DEVELOPMENT_LOG.md:** date, what changed, why, files touched.
+
+**CONFIRMED.md:** date, short name, the concept in enough detail to rebuild elsewhere, and what the user confirmed.

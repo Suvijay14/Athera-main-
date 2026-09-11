@@ -1,27 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --canvas-base: #fbf9f5;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--canvas-base);
+  color: #221f1d;
+  font-family: 'Inter', sans-serif;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface-paper border border-border-delicate rounded-lg shadow-card;
+  }
+  .card-vellum {
+    @apply bg-surface-vellum border border-border-delicate rounded-lg shadow-card;
+  }
+  .btn-primary {
+    @apply bg-terracotta text-white px-4 py-2 rounded-md text-sm font-medium
+           hover:bg-terracotta-soft transition-all duration-150
+           shadow-sm hover:-translate-y-px;
+  }
+  .btn-secondary {
+    @apply bg-surface-vellum border border-border-delicate text-ink-primary
+           px-4 py-2 rounded-md text-sm font-medium
+           hover:bg-surface-container transition-colors duration-150;
+  }
+  .space-pill {
+    @apply px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150;
+  }
+  .space-pill-active {
+    @apply bg-terracotta text-white;
+  }
+  .space-pill-inactive {
+    @apply text-ink-muted hover:text-ink-primary;
+  }
+  .label-caps {
+    @apply text-[11px] font-semibold tracking-widest uppercase text-ink-muted;
+  }
+  .dummy-control {
+    @apply outline outline-2 outline-red-500 outline-offset-2 bg-red-50/70 cursor-not-allowed;
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .animate-pulse-slow {
+    animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
