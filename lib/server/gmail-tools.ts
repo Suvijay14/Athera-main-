@@ -35,6 +35,7 @@ export async function checkEmail(count = 5): Promise<ToolResult> {
   }
 
   const lines: string[] = [`You have ${messages.length} unread email${messages.length === 1 ? '' : 's'}:`]
+  const items: Array<{ label: string; value: string; kind?: string }> = []
 
   for (let i = 0; i < messages.length; i++) {
     const msg = await client.gmail.users.messages.get({
@@ -52,9 +53,14 @@ export async function checkEmail(count = 5): Promise<ToolResult> {
 
     lines.push(`${i + 1}. From: ${from} — ${subject} (${date})`)
     if (snippet) lines.push(`   ${snippet}`)
+    items.push({
+      label: `${i + 1}. ${subject} — ${from}`,
+      value: messages[i].id!,
+      kind: 'email',
+    })
   }
 
-  return ok(lines.join('\n'))
+  return { success: true, data: { message: lines.join('\n'), items } }
 }
 
 export async function searchEmail(query: string, count = 5): Promise<ToolResult> {
@@ -77,6 +83,7 @@ export async function searchEmail(query: string, count = 5): Promise<ToolResult>
   }
 
   const lines: string[] = [`Found ${messages.length} email${messages.length === 1 ? '' : 's'} for "${trimmed}":`]
+  const items: Array<{ label: string; value: string; kind?: string }> = []
 
   for (let i = 0; i < messages.length; i++) {
     const msg = await client.gmail.users.messages.get({
@@ -94,9 +101,14 @@ export async function searchEmail(query: string, count = 5): Promise<ToolResult>
 
     lines.push(`${i + 1}. From: ${from} — ${subject} (${date})`)
     if (snippet) lines.push(`   ${snippet}`)
+    items.push({
+      label: `${i + 1}. ${subject} — ${from}`,
+      value: messages[i].id!,
+      kind: 'email',
+    })
   }
 
-  return ok(lines.join('\n'))
+  return { success: true, data: { message: lines.join('\n'), items } }
 }
 
 export async function scanEmailForSpacesTool(days = 2): Promise<ToolResult> {

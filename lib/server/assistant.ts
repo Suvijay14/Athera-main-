@@ -37,9 +37,11 @@ Rules:
 - To use a tool: {"action":"tool","tool":"tool_name","params":{}}
 - After tool results, decide next step (another tool or respond).
 - Keep spoken replies under 2 sentences. Be direct.
+- When listing files, use a numbered list with filename only — never paste full paths or long paragraphs.
 - When you list files, tell the user a floating widget appeared — they can drag it into a Space to save the files.
 - Never mention Dex or vault.
-- If you cannot do something, respond honestly.`
+- If you cannot do something, respond honestly.
+- For reminders: use set_reminder with text and dueAt as ISO 8601 (e.g. 2026-09-11T18:00:00). Never pass bare times like "18:00".`
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -50,6 +52,7 @@ export interface AssistantResult {
   response: string
   toolsUsed: string[]
   pendingApproval?: PendingApproval
+  lastToolResult?: ToolResult
 }
 
 interface AgentAction {
@@ -60,13 +63,48 @@ interface AgentAction {
 }
 
 function parseAction(raw: string): AgentAction | null {
-  const jsonMatch = raw.trim().match(/\{[\s\S]*\}/)
+  const trimmed = raw.trim()
+  const blocks = trimmed.match(/\{[\s\S]*?\}/g) ?? []
+  let fallbackRespond: AgentAction | null = null
+
+  for (const block of blocks) {
+    try {
+      const action = JSON.parse(block) as AgentAction
+      if (action.action === 'tool' && action.tool) return action
+      if (action.action === 'respond' && action.text && !fallbackRespond) {
+        fallbackRespond = action
+      }
+    } catch {
+      continue
+    }
+  }
+
+  if (fallbackRespond) return fallbackRespond
+
+  const jsonMatch = trimmed.match(/\{[\s\S]*\}/)
   if (!jsonMatch) return null
   try {
     return JSON.parse(jsonMatch[0]) as AgentAction
   } catch {
     return null
   }
+}
+
+function sanitizeSpokenResponse(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed.includes('"action"')) return trimmed
+
+  const blocks = trimmed.match(/\{[\s\S]*?\}/g) ?? []
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    try {
+      const action = JSON.parse(blocks[i]) as AgentAction
+      if (action.action === 'respond' && action.text) return action.text
+    } catch {
+      continue
+    }
+  }
+
+  return trimmed.replace(/\{[\s\S]*?\}/g, '').replace(/\s+/g, ' ').trim() || 'Done.'
 }
 
 function pendingFromListFiles(result: ToolResult): PendingApproval | undefined {
@@ -96,13 +134,17 @@ function spokenFromToolResult(result: ToolResult): string {
 
 export async function runAssistant(
   userText: string,
-  history: ChatMessage[] = []
+  history: ChatMessage[] = [],
+  contextHint?: string
 ): Promise<AssistantResult> {
   const toolsUsed: string[] = []
   let pendingApproval: PendingApproval | undefined
+  let lastToolResult: ToolResult | undefined
+
+  const systemContent = contextHint ? `${SYSTEM}\n\n${contextHint}` : SYSTEM
 
   const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: SYSTEM },
+    { role: 'system', content: systemContent },
     ...history.map((m) => ({ role: m.role, content: m.content })),
     { role: 'user', content: userText },
   ]
@@ -111,21 +153,38 @@ export async function runAssistant(
     const raw = await llmChat(messages)
     const action = parseAction(raw)
 
-    if (!action) return { response: raw || 'I could not process that.', toolsUsed, pendingApproval }
+    if (!action) {
+      return {
+        response: sanitizeSpokenResponse(raw) || 'I could not process that.',
+        toolsUsed,
+        pendingApproval,
+        lastToolResult,
+      }
+    }
 
     if (action.action === 'respond' && action.text) {
-      return { response: action.text, toolsUsed, pendingApproval }
+      return { response: action.text, toolsUsed, pendingApproval, lastToolResult }
     }
 
     if (action.action === 'tool' && action.tool) {
       toolsUsed.push(action.tool)
       const result = await runTool(action.tool, action.params ?? {})
+      lastToolResult = result
 
       if (action.tool === 'list_files' && result.success) {
         pendingApproval = pendingFromListFiles(result)
       }
 
       const toolMessage = spokenFromToolResult(result)
+
+      if (action.tool === 'set_reminder') {
+        return {
+          response: result.success ? toolMessage : (result.error ?? toolMessage),
+          toolsUsed,
+          pendingApproval,
+          lastToolResult: result,
+        }
+      }
 
       messages.push({ role: 'assistant', content: raw })
       messages.push({
@@ -138,22 +197,29 @@ export async function runAssistant(
           response: `${toolMessage} A floating widget appeared — drag it onto a Space to save these files.`,
           toolsUsed,
           pendingApproval,
+          lastToolResult,
         }
       }
 
       if (step === 4) {
-        return { response: toolMessage, toolsUsed, pendingApproval }
+        return { response: toolMessage, toolsUsed, pendingApproval, lastToolResult }
       }
 
       continue
     }
 
     return {
-      response: raw.trim() || 'I could not process that. Try saying "open [filename]".',
+      response: sanitizeSpokenResponse(raw) || 'I could not process that. Try saying "open [filename]".',
       toolsUsed,
       pendingApproval,
+      lastToolResult,
     }
   }
 
-  return { response: 'I hit my step limit. Try a simpler request.', toolsUsed, pendingApproval }
+  return {
+    response: 'I hit my step limit. Try a simpler request.',
+    toolsUsed,
+    pendingApproval,
+    lastToolResult,
+  }
 }

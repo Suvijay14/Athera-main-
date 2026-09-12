@@ -185,7 +185,13 @@ export async function stopKokoroSpeech(): Promise<void> {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 }
 
-import type { PendingApproval, PendingEmailFiling, PendingLifeAction } from '@/lib/types'
+import type {
+  FileListItem,
+  PendingApproval,
+  PendingEmailFiling,
+  PendingLifeAction,
+  PendingToolContext,
+} from '@/lib/types'
 
 export interface VoiceCommandResult {
   response: string
@@ -193,13 +199,16 @@ export interface VoiceCommandResult {
   pendingApproval?: PendingApproval
   pendingLifeAction?: PendingLifeAction
   pendingEmailFiling?: PendingEmailFiling
+  pendingToolContext?: PendingToolContext | null
+  fileList?: FileListItem[]
 }
 
 export async function sendVoiceCommand(
   text: string,
   history: ChatMessage[] = [],
   pendingLifeAction?: PendingLifeAction | null,
-  pendingEmailFiling?: PendingEmailFiling | null
+  pendingEmailFiling?: PendingEmailFiling | null,
+  pendingToolContext?: PendingToolContext | null
 ): Promise<VoiceCommandResult | null> {
   try {
     const res = await fetch('/api/voice/chat', {
@@ -210,6 +219,7 @@ export async function sendVoiceCommand(
         history,
         pendingLifeAction: pendingLifeAction ?? null,
         pendingEmailFiling: pendingEmailFiling ?? null,
+        pendingToolContext: pendingToolContext ?? null,
       }),
     })
     if (!res.ok) {

@@ -78,6 +78,29 @@ export interface Space {
   updatedAt: string
 }
 
+export interface ToolContextItem {
+  label: string
+  value: string
+  kind?: 'file' | 'directory' | 'email'
+  url?: string
+}
+
+export interface FileListItem {
+  name: string
+  path: string
+  kind?: 'file' | 'directory'
+}
+
+/** Structured results from a prior tool call — enables follow-ups like "list them" */
+export interface PendingToolContext {
+  id: string
+  sourceTool: string
+  query: string
+  items: ToolContextItem[]
+  expiresAt: string
+  userMessage: string
+}
+
 /** Port of Ember AthenaReasoning result — pending user confirmation */
 export interface PendingLifeAction {
   signal: string

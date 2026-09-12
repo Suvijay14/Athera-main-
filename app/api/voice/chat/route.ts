@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runVoiceCommand } from '@/lib/server/voice-orchestrator'
 import { isLLMAvailable } from '@/lib/server/llm'
-import type { PendingEmailFiling, PendingLifeAction } from '@/lib/types'
+import type { PendingEmailFiling, PendingLifeAction, PendingToolContext } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
-  const { text, history = [], pendingLifeAction = null, pendingEmailFiling = null } =
-    (await req.json()) as {
-      text?: string
-      history?: Array<{ role: 'user' | 'assistant'; content: string }>
-      pendingLifeAction?: PendingLifeAction | null
-      pendingEmailFiling?: PendingEmailFiling | null
-    }
+  const {
+    text,
+    history = [],
+    pendingLifeAction = null,
+    pendingEmailFiling = null,
+    pendingToolContext = null,
+  } = (await req.json()) as {
+    text?: string
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>
+    pendingLifeAction?: PendingLifeAction | null
+    pendingEmailFiling?: PendingEmailFiling | null
+    pendingToolContext?: PendingToolContext | null
+  }
 
   if (!text?.trim()) {
     return NextResponse.json({ error: 'text is required' }, { status: 400 })
@@ -31,7 +37,8 @@ export async function POST(req: NextRequest) {
       text.trim(),
       history,
       pendingLifeAction,
-      pendingEmailFiling
+      pendingEmailFiling,
+      pendingToolContext
     )
     return NextResponse.json(result)
   } catch (err) {

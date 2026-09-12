@@ -6,6 +6,13 @@ import path from 'node:path'
 import os from 'node:os'
 import { createSpace, listSpaces } from './spaces'
 import { checkEmail, scanEmailForSpacesTool, searchEmail, sendEmail } from './gmail-tools'
+import { formatCompactFileList, pathsToFileList } from './file-list'
+import { resolveUserPath, safeUserPath } from './path-utils'
+import {
+  buildReminderAppleScript,
+  formatReminderTime,
+  parseReminderInput,
+} from './reminder-parse'
 
 const exec = promisify(execFile)
 
@@ -28,7 +35,7 @@ Available tools (return JSON to use one):
 - open_app: Open a Mac application. params: { "app": "Safari" }
 - open_file: Find a file by name or path and open it in the default app. params: { "query": "Berkeley syllabus" }
 - create_note: Save a note to ~/Documents/athena-notes/. params: { "title": "My Note", "content": "..." }
-- set_reminder: Create a Reminders item. params: { "text": "Buy milk", "time": "optional" }
+- set_reminder: Create a Reminders item. params: { "text": "Buy milk", "dueAt": "ISO date optional" }
 - web_search: Open Google search in browser. params: { "query": "Berkeley CS189" }
 - get_battery: Battery level and charging status. params: {}
 - get_wifi: Current WiFi network name. params: {}
@@ -84,19 +91,57 @@ export function toolResultMessage(result: ToolResult): string {
   return typeof result.data === 'string' ? result.data : JSON.stringify(result.data)
 }
 
-function expandHome(p: string): string {
-  if (p.startsWith('~/')) return path.join(os.homedir(), p.slice(2))
-  return p
-}
-
 function safePath(input: string): string | null {
-  const resolved = path.resolve(expandHome(input))
-  if (!resolved.startsWith(os.homedir())) return null
-  return resolved
+  return safeUserPath(input)
 }
 
 function sanitizeFindQuery(query: string): string {
   return query.replace(/[^a-zA-Z0-9._\- ]/g, '').trim()
+}
+
+const DEFAULT_SEARCH_DIRS = () => {
+  const home = os.homedir()
+  return [path.join(home, 'Desktop'), path.join(home, 'Documents'), path.join(home, 'Downloads')]
+}
+
+/** Filesystem search — reliable for Desktop files (Spotlight mdfind often misses them) */
+function searchPathsByName(query: string, dirs?: string[], maxDepth = 6): string[] {
+  const safe = sanitizeFindQuery(query)
+  if (!safe) return []
+
+  const searchDirs = dirs?.length ? dirs : DEFAULT_SEARCH_DIRS()
+  const results: string[] = []
+
+  for (const dir of searchDirs) {
+    try {
+      const out = execSync(`find "${dir}" -maxdepth ${maxDepth} -iname "*${safe}*" 2>/dev/null`, {
+        encoding: 'utf8',
+        timeout: 10000,
+      }).trim()
+      if (out) results.push(...out.split('\n').filter(Boolean))
+    } catch {
+      // no matches in this directory
+    }
+  }
+
+  return Array.from(new Set(results.filter((p) => safeUserPath(p))))
+}
+
+function buildFileSearchResult(query: string, results: string[], title?: string): ToolResult {
+  if (results.length === 0) {
+    return ok(`No files found matching "${query}".`)
+  }
+  const fileList = pathsToFileList(results.slice(0, 20))
+  const items = fileList.map((f, i) => ({
+    label: `${i + 1}. ${f.name}`,
+    value: f.path,
+    kind: f.kind ?? ('file' as const),
+  }))
+  return ok(formatCompactFileList(fileList, title ?? `Matches for "${query}"`), {
+    matches: results,
+    items,
+    fileList,
+  })
 }
 
 export async function runTool(name: string, params: Record<string, unknown>): Promise<ToolResult> {
@@ -110,11 +155,11 @@ export async function runTool(name: string, params: Record<string, unknown>): Pr
       case 'list_files':
         return await listFiles(String(params.path ?? '~/Desktop'))
       case 'search_files':
-        return searchFiles(String(params.query ?? ''))
+        return searchFiles(String(params.query ?? ''), String(params.extension ?? ''))
       case 'read_file':
         return await readFile(String(params.path ?? ''))
       case 'find_file':
-        return await findFile(String(params.name ?? ''), String(params.directory ?? '~'))
+        return await findFile(String(params.name ?? ''), String(params.directory ?? os.homedir()))
       case 'get_system_info':
         return getSystemInfo()
       case 'open_folder':
@@ -126,7 +171,7 @@ export async function runTool(name: string, params: Record<string, unknown>): Pr
       case 'create_note':
         return createNote(String(params.title ?? ''), String(params.content ?? ''))
       case 'set_reminder':
-        return await setReminder(String(params.text ?? ''), params.time ? String(params.time) : undefined)
+        return await setReminder(String(params.text ?? ''), parseReminderDueAt(params))
       case 'web_search':
         return await webSearch(String(params.query ?? ''))
       case 'get_battery':
@@ -184,11 +229,16 @@ function getTime(): ToolResult {
 }
 
 async function takeScreenshot(): Promise<ToolResult> {
-  const dir = path.join(os.tmpdir(), 'athena-voice')
+  const dir = path.join(os.homedir(), 'Desktop')
   await fs.mkdir(dir, { recursive: true })
-  const out = path.join(dir, `screenshot-${Date.now()}.png`)
+  const filename = `athena-screenshot-${Date.now()}.png`
+  const out = path.join(dir, filename)
   await exec('/usr/sbin/screencapture', ['-x', out])
-  return ok('Screenshot saved.', { path: out })
+  return ok(`Screenshot saved to ~/Desktop/${filename}`, {
+    path: out,
+    filename,
+    desktopPath: `~/Desktop/${filename}`,
+  })
 }
 
 async function listFiles(folder: string): Promise<ToolResult> {
@@ -205,47 +255,91 @@ async function listFiles(folder: string): Promise<ToolResult> {
   return { success: true, data: { path: resolved, folder: folderLabel, files, message: `Listed ${files.length} items.` } }
 }
 
-function searchFiles(query: string): ToolResult {
-  const safe = sanitizeFindQuery(query)
-  if (!safe) return fail('query is required')
-  const home = os.homedir()
-  const paths = [path.join(home, 'Desktop'), path.join(home, 'Documents'), path.join(home, 'Downloads')]
-  const results: string[] = []
+function searchFiles(query: string, extension = ''): ToolResult {
+  const wantsPdf = /\bpdf\b/i.test(query) || extension === 'pdf'
 
-  for (const p of paths) {
-    try {
-      const out = execSync(`find "${p}" -maxdepth 2 -iname "*${safe}*" 2>/dev/null`, {
-        encoding: 'utf8',
-        timeout: 5000,
-      }).trim()
-      if (out) results.push(...out.split('\n').filter(Boolean))
-    } catch {
-      // no matches in this path
+  if (wantsPdf) {
+    const home = os.homedir()
+    let results: string[] = []
+    for (const p of DEFAULT_SEARCH_DIRS()) {
+      try {
+        const out = execSync(`find "${p}" -maxdepth 6 -iname "*.pdf" 2>/dev/null`, {
+          encoding: 'utf8',
+          timeout: 10000,
+        }).trim()
+        if (out) results.push(...out.split('\n').filter(Boolean))
+      } catch {
+        // no matches
+      }
     }
+    results = Array.from(new Set(results.filter((p) => safeUserPath(p))))
+    return buildFileSearchResult('pdf', results, 'PDF files')
   }
 
-  if (results.length === 0) return ok(`No files found matching "${query}".`)
-  return ok(`Found ${results.length} file(s):\n${results.slice(0, 20).join('\n')}`, { matches: results })
+  const safe = sanitizeFindQuery(
+    query.replace(/\b(pdf|pdfs)\b/gi, '').replace(/\bfiles?\b/gi, '').trim()
+  )
+  if (!safe) return fail('query is required')
+
+  let results = searchPathsByName(safe)
+  if (extension) {
+    results = results.filter((p) => p.toLowerCase().endsWith(`.${extension.toLowerCase()}`))
+  }
+  return buildFileSearchResult(query, results)
+}
+
+async function readFileAtPath(resolved: string): Promise<ToolResult> {
+  const stat = await fs.stat(resolved)
+  if (!stat.isFile()) return fail('Not a file')
+  if (stat.size === 0) {
+    return ok('The file is empty.', { path: resolved, content: '' })
+  }
+  if (stat.size > 8192) return fail('File too large (max 8KB)')
+  const content = await fs.readFile(resolved, 'utf-8')
+  const preview = content.length > 500 ? `${content.slice(0, 500)}…` : content
+  return ok(`Contents of ${path.basename(resolved)}:\n${preview}`, { path: resolved, content })
 }
 
 async function readFile(filePath: string): Promise<ToolResult> {
-  const resolved = safePath(filePath)
-  if (!resolved) return fail('Path must be inside your home directory')
-  const stat = await fs.stat(resolved)
-  if (!stat.isFile()) return fail('Not a file')
-  if (stat.size > 8192) return fail('File too large (max 8KB)')
-  const content = await fs.readFile(resolved, 'utf-8')
-  return ok('File read.', { path: resolved, content })
+  const trimmed = filePath.trim()
+  if (!trimmed) return fail('path is required')
+
+  const direct = safePath(trimmed)
+  if (direct && fsSync.existsSync(direct)) {
+    return readFileAtPath(direct)
+  }
+
+  const matches = await searchFilePaths(trimmed)
+  const files = matches.filter((p) => {
+    try {
+      return fsSync.statSync(p).isFile()
+    } catch {
+      return false
+    }
+  })
+
+  if (files.length === 0) {
+    return fail(`No file found matching "${trimmed}".`)
+  }
+
+  const target = pickBestFileMatch(files, trimmed)
+  return readFileAtPath(target)
 }
 
 async function findFile(name: string, directory: string): Promise<ToolResult> {
-  const resolved = safePath(directory)
-  if (!resolved) return fail('Directory must be inside your home directory')
   if (!name.trim()) return fail('name is required')
-  const query = "kMDItemDisplayName == '*" + name + "*'c"
-  const { stdout } = await exec('mdfind', ['-onlyin', resolved, query])
-  const matches = stdout.trim().split('\n').filter(Boolean).slice(0, 20)
-  return ok(matches.length ? `Found ${matches.length} match(es).` : 'No matches found.', { matches })
+
+  const resolved = safePath(directory) ?? safePath(os.homedir())
+  if (!resolved) return fail('Directory must be inside your home directory')
+
+  const home = os.homedir()
+  const dirs =
+    resolved === home || resolved === path.join(home, '')
+      ? DEFAULT_SEARCH_DIRS()
+      : [resolved]
+
+  const matches = searchPathsByName(name, dirs)
+  return buildFileSearchResult(name, matches)
 }
 
 function getSystemInfo(): ToolResult {
@@ -263,10 +357,20 @@ function getSystemInfo(): ToolResult {
 }
 
 async function openFolder(folder: string): Promise<ToolResult> {
-  const resolved = safePath(folder)
-  if (!resolved) return fail('Path must be inside your home directory')
+  const resolved = resolveUserPath(folder)
+  if (!resolved || !resolved.startsWith(os.homedir())) {
+    return fail('Path must be inside your home directory')
+  }
+  if (!fsSync.existsSync(resolved)) {
+    return fail(`Folder not found: ${folder}`)
+  }
+  const stat = fsSync.statSync(resolved)
+  if (!stat.isDirectory()) {
+    return fail(`That is a file, not a folder. Say "open ${path.basename(resolved)}" to open the file.`)
+  }
   await exec('open', [resolved])
-  return ok('Opened in Finder.', { path: resolved })
+  const label = path.basename(resolved) || folder
+  return ok(`Opened ${label} in Finder.`, { path: resolved })
 }
 
 async function openApp(app: string): Promise<ToolResult> {
@@ -417,9 +521,15 @@ async function openFile(query: string): Promise<ToolResult> {
     .map((p) => `• ${path.basename(p)} (${p})`)
     .join('\n')
 
+  const items = matches.slice(0, 20).map((p, i) => ({
+    label: `${i + 1}. ${path.basename(p)}`,
+    value: p,
+    kind: 'file' as const,
+  }))
+
   return ok(
     `Found ${matches.length} matches. Opened ${openedName}.\n${listed}`,
-    { path: toOpen, opened: toOpen, matches }
+    { path: toOpen, opened: toOpen, matches, items }
   )
 }
 
@@ -434,18 +544,43 @@ function createNote(title: string, content: string): ToolResult {
   return ok(`Note saved: "${trimmedTitle}" at ~/Documents/athena-notes/${filename}`)
 }
 
-async function setReminder(text: string, time?: string): ToolResult {
+function parseReminderDueAt(params: Record<string, unknown>): Date | undefined {
+  if (params.dueAt) {
+    const d = new Date(String(params.dueAt))
+    if (!Number.isNaN(d.getTime())) return d
+  }
+  if (params.time) {
+    const t = String(params.time).trim()
+    const clock = t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/)
+    if (clock) {
+      const d = new Date()
+      d.setHours(Number(clock[1]), Number(clock[2]), 0, 0)
+      return d
+    }
+    const parsed = parseReminderInput(`reminder for ${t}`)
+    if (parsed?.dueAt) return parsed.dueAt
+  }
+  return undefined
+}
+
+async function setReminder(text: string, dueAt?: Date): Promise<ToolResult> {
   const reminderText = text.trim()
   if (!reminderText) return fail('text is required')
-  const escaped = reminderText.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-  const script = time
-    ? `tell app "Reminders" to make new reminder with properties {name:"${escaped}", due date:date "${time.replace(/"/g, '\\"')}"}`
-    : `tell app "Reminders" to make new reminder with properties {name:"${escaped}"}`
-  await exec('osascript', ['-e', script])
+
+  const due = dueAt && !Number.isNaN(dueAt.getTime()) ? dueAt : undefined
+  const script = buildReminderAppleScript(reminderText, due)
+
+  try {
+    await exec('osascript', ['-e', script])
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Reminders app failed'
+    return fail(`Could not create reminder: ${msg}`)
+  }
+
   return ok(
-    time
-      ? `Reminder set: "${reminderText}" at ${time}`
-      : `Reminder added: "${reminderText}" (no time set)`
+    due
+      ? `Reminder set: "${reminderText}" for ${formatReminderTime(due)}.`
+      : `Reminder added: "${reminderText}" (no time set).`
   )
 }
 

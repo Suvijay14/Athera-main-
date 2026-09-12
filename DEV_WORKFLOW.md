@@ -28,6 +28,14 @@ npm run dev:next
 
 Open http://localhost:3002
 
+**Important:** Port 3002 must run from **`JARVIS-dev`**, not `JARVIS`. Both folders have a `dev:next` script, but only `JARVIS-dev` has new features. If reminders/files fixes don't work, check which folder is serving :3002:
+
+```bash
+lsof -i :3002   # should show .../JARVIS-dev/.../next dev
+```
+
+No `npm run build` needed for daily dev — just `npm run dev:next`. After pulling code changes, restart the dev server (Ctrl+C, then run again). If behavior seems stale: `rm -rf .next && npm run dev:next`.
+
 **Edit code only in `JARVIS-dev`.** Keep `JARVIS` read-only unless applying a hotfix to stable.
 
 ## Promote experimental → stable

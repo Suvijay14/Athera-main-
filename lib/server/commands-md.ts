@@ -52,7 +52,9 @@ export function detectTool(phrase: string): string {
   if (lower.includes('note')) return 'create_note'
   if (lower.includes('remind')) return 'set_reminder'
   if (lower.includes('search') || lower.includes('find file')) return 'search_files'
+  if (lower.includes('copy') && lower.includes('clipboard')) return 'set_clipboard'
   if (lower.includes('clipboard')) return 'get_clipboard'
+  if (lower.includes('folder') && lower.includes('open')) return 'open_folder'
   if (lower.includes('volume')) return 'set_volume / get_volume'
   if (lower.includes('screenshot')) return 'take_screenshot'
   if (lower.includes('semester') || lower.includes('life') || lower.includes('started'))

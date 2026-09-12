@@ -12,6 +12,7 @@ const navItems = [
   { href: '/setup', label: 'Voice Setup', icon: '🎙' },
   { href: '/setup', label: 'Connected Life', icon: '⟳', gmailDot: true },
   { href: '/reflections', label: 'Reflections', icon: '≡' },
+  { href: '/clipboard', label: 'Clipboard', icon: '📎' },
   { href: '/commands', label: 'Commands', icon: '📋', badge: true },
 ]
 

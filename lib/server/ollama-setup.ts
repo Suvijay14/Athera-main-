@@ -67,7 +67,7 @@ export async function getOllamaSetupStatus(): Promise<OllamaSetupStatus> {
 
 async function waitForOllama(maxMs = 20000): Promise<boolean> {
   const start = Date.now()
-  while Date.now() - start < maxMs) {
+  while (Date.now() - start < maxMs) {
     if (await isOllamaRunning()) return true
     await new Promise((r) => setTimeout(r, 1000))
   }

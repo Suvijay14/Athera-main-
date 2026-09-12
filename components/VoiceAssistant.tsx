@@ -27,7 +27,7 @@ import {
 import Link from 'next/link'
 import { usePendingFiles } from '@/components/PendingFilesContext'
 import { submitCommandFeedback } from '@/lib/commands'
-import type { PendingEmailFiling, PendingLifeAction } from '@/lib/types'
+import type { FileListItem, PendingEmailFiling, PendingLifeAction, PendingToolContext } from '@/lib/types'
 
 type FeedbackMode = 'buttons' | 'error-input' | 'logged-confirmed' | 'logged-broken' | null
 
@@ -100,8 +100,11 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
   const [errorInput, setErrorInput] = useState('')
   const [pendingLife, setPendingLife] = useState<PendingLifeAction | null>(null)
   const [pendingEmail, setPendingEmail] = useState<PendingEmailFiling | null>(null)
+  const [pendingTool, setPendingTool] = useState<PendingToolContext | null>(null)
+  const [fileList, setFileList] = useState<FileListItem[]>([])
   const pendingLifeRef = useRef<PendingLifeAction | null>(null)
   const pendingEmailRef = useRef<PendingEmailFiling | null>(null)
+  const pendingToolRef = useRef<PendingToolContext | null>(null)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
   const pendingTranscript = useRef('')
   const skipSpeakRef = useRef(false)
@@ -210,7 +213,8 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
         text,
         history,
         pendingLifeRef.current,
-        pendingEmailRef.current
+        pendingEmailRef.current,
+        pendingToolRef.current
       )
       if (!result) {
         setError('Voice not ready. Start Ollama or configure Groq in .env.local.')
@@ -219,6 +223,7 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
       }
 
       setResponse(result.response)
+      setFileList(result.fileList ?? [])
       setLastTool(result.toolsUsed?.[0] ?? 'unknown')
       setFeedbackMode('buttons')
       if (result.pendingApproval) setPending(result.pendingApproval)
@@ -242,6 +247,13 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
         const nextLife = result.pendingLifeAction ?? null
         pendingLifeRef.current = nextLife
         setPendingLife(nextLife)
+
+        const nextTool =
+          result.pendingToolContext !== undefined
+            ? result.pendingToolContext
+            : pendingToolRef.current
+        pendingToolRef.current = nextTool
+        setPendingTool(nextTool)
       }
       setHistory((prev) => [
         ...prev.slice(-8),
@@ -310,6 +322,20 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
   const isListening = state === 'listening'
   const isLoading = state === 'processing' || state === 'speaking'
   const canStop = isLoading || isListening
+
+  const openFileItem = useCallback(async (item: FileListItem) => {
+    try {
+      const res = await fetch('/api/files/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: item.path }),
+      })
+      const data = (await res.json()) as { message?: string; error?: string }
+      setResponse(data.message ?? data.error ?? `Opened ${item.name}.`)
+    } catch {
+      setResponse(`Could not open ${item.name}.`)
+    }
+  }, [])
 
   const submitFeedback = useCallback(
     async (status: 'confirmed' | 'broken', error?: string) => {
@@ -489,9 +515,29 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
             {response && (
               <div className="text-xs">
                 <span className="label-caps text-terracotta">Athena</span>
-                <p className="text-ink-secondary mt-1 font-newsreader italic">
-                  &ldquo;{response}&rdquo;
+                <p className="text-ink-secondary mt-1 font-newsreader whitespace-pre-wrap">
+                  {response}
                 </p>
+                {fileList.length > 0 && (
+                  <ul className="mt-2 space-y-1 max-h-[160px] overflow-y-auto">
+                    {fileList.slice(0, 10).map((item, i) => (
+                      <li key={item.path}>
+                        <button
+                          type="button"
+                          onClick={() => openFileItem(item)}
+                          className="w-full text-left px-2 py-1.5 rounded-md border border-border-delicate bg-surface-vellum hover:bg-ochre-light/40 transition-colors flex items-center gap-2"
+                        >
+                          <span className="text-ink-faint w-4 flex-shrink-0">{i + 1}.</span>
+                          <span className="flex-shrink-0">{item.kind === 'directory' ? '📁' : '📄'}</span>
+                          <span className="truncate text-ink-primary">{item.name}</span>
+                        </button>
+                      </li>
+                    ))}
+                    {fileList.length > 10 && (
+                      <li className="text-[10px] text-ink-faint px-2">+{fileList.length - 10} more</li>
+                    )}
+                  </ul>
+                )}
                 {feedbackMode === 'buttons' && (
                   <div className="flex gap-2 mt-2">
                     <button
@@ -572,6 +618,17 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
                     Skip
                   </button>
                 </div>
+              </div>
+            )}
+            {pendingTool && (
+              <div className="bg-surface-vellum border border-border-delicate rounded-lg p-3 text-xs">
+                <div className="font-semibold text-ink-muted uppercase tracking-wide text-[10px]">
+                  Follow-up context — {pendingTool.items.length} results
+                </div>
+                <p className="text-ink-secondary mt-1">{pendingTool.userMessage}</p>
+                <p className="text-ink-faint mt-1">
+                  Try &ldquo;list them&rdquo;, &ldquo;open the first one&rdquo;, or a number
+                </p>
               </div>
             )}
             {pendingLife && (
