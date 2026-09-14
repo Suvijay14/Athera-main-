@@ -86,9 +86,21 @@ export function patchDeviceSettings(patch: Partial<DeviceSettings>): DeviceSetti
   const merged: DeviceSettings = {
     ...current,
     ...patch,
-    ollama: { ...current.ollama, ...patch.ollama },
-    kokoro: { ...current.kokoro, ...patch.kokoro },
-    groq: { ...current.groq, ...patch.groq },
+    // Spreading two possibly-undefined sections would widen the required
+    // `installed`/`configured` flags to optional, and would also write an empty
+    // object for a section the device has never had. Keep undefined as undefined.
+    ollama:
+      current.ollama || patch.ollama
+        ? { installed: false, ...current.ollama, ...patch.ollama }
+        : undefined,
+    kokoro:
+      current.kokoro || patch.kokoro
+        ? { installed: false, ...current.kokoro, ...patch.kokoro }
+        : undefined,
+    groq:
+      current.groq || patch.groq
+        ? { configured: false, ...current.groq, ...patch.groq }
+        : undefined,
     updatedAt: new Date().toISOString(),
   }
   writeDeviceSettings(merged)

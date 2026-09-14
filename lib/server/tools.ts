@@ -259,7 +259,6 @@ function searchFiles(query: string, extension = ''): ToolResult {
   const wantsPdf = /\bpdf\b/i.test(query) || extension === 'pdf'
 
   if (wantsPdf) {
-    const home = os.homedir()
     let results: string[] = []
     for (const p of DEFAULT_SEARCH_DIRS()) {
       try {
