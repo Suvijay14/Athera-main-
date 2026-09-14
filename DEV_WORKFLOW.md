@@ -1,11 +1,10 @@
 # Dev Workflow
 
-Single app at **`/Users/suvijay/JARVIS`** on port **3001**.
+Single app, run from the repo root on port **3001**.
 
 ## Run
 
 ```bash
-cd /Users/suvijay/JARVIS
 npm run dev
 ```
 
@@ -32,14 +31,13 @@ Setup → **Connect bCourses** → create a personal access token at
 
 ## Optional: experimental worktree
 
-To try changes in isolation before merging to stable:
+To try changes in isolation before merging to main:
 
 ```bash
-cd /Users/suvijay/JARVIS
 git checkout -b dev/next
-git worktree add ../JARVIS-dev dev/next
-# work in JARVIS-dev on :3002, then merge back:
-git checkout stable
+git worktree add ../athera-dev dev/next
+# work in athera-dev on :3002 (npm run dev:next), then merge back:
+git checkout main
 git merge dev/next
 ```
 
