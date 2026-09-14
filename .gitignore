@@ -37,3 +37,22 @@ next-env.d.ts
 
 # local data
 .data/
+
+# env — belt and braces (.env*.local alone misses a bare .env)
+.env
+.env.*
+!.env.example
+
+# python sidecar
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# editors / os
+.idea/
+*.swp
+*.swo
+
+# logs
+*.log
