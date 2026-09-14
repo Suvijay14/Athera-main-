@@ -2,7 +2,8 @@
 
 A local-first personal assistant: a Next.js app with voice, Gmail, calendar,
 spaces/notes, file tools and bCourses (Canvas) integration. Everything runs on
-your own machine — there is no hosted backend, and user data stays in `.data/`.
+your own machine — there is no hosted backend, and your data never leaves it.
+See [Where your data lives](#where-your-data-lives).
 
 > **Local use only.** The API routes assume a trusted single user on localhost:
 > they read and open local files, read the clipboard, and spawn processes. Do
@@ -52,6 +53,16 @@ scripts/      Python sidecar for Kokoro TTS
 .data/        Local runtime state and tokens — gitignored, never commit
 ```
 
+## Where your data lives
+
+Nothing is stored remotely, but not all of it is inside the repo:
+
+| Location | What |
+| --- | --- |
+| `.data/` | Tokens, device settings, spaces, life notes. Gitignored — never commit. |
+| `.data/kokoro/` | Downloaded TTS voice models (~315 MB). |
+| `~/Documents/athera-notes/` | Notes written by the `create_note` tool. **Outside the repo** — deleting the project does not delete these. |
+
 ## Integrations
 
 - **Gmail** — OAuth via Google Cloud; tokens land in `.data/gmail-token.json`
@@ -59,6 +70,27 @@ scripts/      Python sidecar for Kokoro TTS
   `.data/canvas-token.json`, expires after 90 days
 - **Groq / Ollama** — cloud and local LLM providers, selected at runtime
 - **Kokoro** — local TTS; first run downloads ~315 MB of voice models
+
+## Upgrading from Athena
+
+The project was renamed from Athena to Athera. If you ran an earlier build, two
+things carry over automatically and need no action:
+
+- **Widget layouts.** Saved sizes move from the old `athena-widget-sizes`
+  browser key to the new one the first time you load the app.
+- **Notes.** An install with an existing `~/Documents/athena-notes` keeps
+  writing there, so notes are never split across two folders. Fresh installs
+  use `athera-notes`.
+
+To converge on the new name, move the folder once — after this the app finds it
+under the current name and the fallback stops applying:
+
+```bash
+mv ~/Documents/athena-notes ~/Documents/athera-notes
+```
+
+This section is temporary and can be deleted once nobody is running a
+pre-rename install.
 
 See [DEV_WORKFLOW.md](DEV_WORKFLOW.md) for day-to-day workflow and
 [COMMANDS.md](COMMANDS.md) for the voice/tool command test matrix.
