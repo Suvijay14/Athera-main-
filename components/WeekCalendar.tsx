@@ -49,8 +49,8 @@ export default function WeekCalendar() {
   }, [])
 
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-3">
+    <div className="card p-5 h-full w-full min-h-0 min-w-0 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-base">📅</span>
           <h2 className="font-newsreader text-lg text-ink-primary">This Week</h2>
@@ -58,6 +58,7 @@ export default function WeekCalendar() {
         <span className="text-xs text-ink-faint">{weekRange}</span>
       </div>
 
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
       {loading ? (
         <div className="space-y-2">
           {[1, 2].map((i) => (
@@ -68,7 +69,7 @@ export default function WeekCalendar() {
         <p className="text-sm text-ink-faint py-4">No events yet. Connect the API to sync your calendar.</p>
       ) : (
         <>
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-4 flex-shrink-0">
             {[
               { label: 'Classes', color: 'bg-slate-stone' },
               { label: 'Focus', color: 'bg-sage' },
@@ -129,8 +130,9 @@ export default function WeekCalendar() {
           </div>
         </>
       )}
+      </div>
 
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-delicate">
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-delicate flex-shrink-0">
         <DummyControl className="text-xs text-terracotta px-1 py-0.5 rounded ml-auto">
           Full Calendar ↗
         </DummyControl>

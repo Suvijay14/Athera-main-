@@ -19,6 +19,17 @@ Redirect URI in [Google Cloud Console](https://console.cloud.google.com):
 http://localhost:3001/api/auth/gmail/callback
 ```
 
+## bCourses (Canvas)
+
+Setup → **Connect bCourses** → create a personal access token at
+[bcourses.berkeley.edu/profile/settings](https://bcourses.berkeley.edu/profile/settings)
+→ paste into Athena.
+
+- Token stored locally at `.data/canvas-token.json` (gitignored)
+- Expires after **90 days** — Setup and School page show days remaining
+- Optional env override: `CANVAS_BASE_URL=https://bcourses.berkeley.edu`
+- Active courses appear on the **School** home page sidebar
+
 ## Optional: experimental worktree
 
 To try changes in isolation before merging to stable:

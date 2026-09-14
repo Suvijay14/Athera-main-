@@ -101,6 +101,40 @@ export interface PendingToolContext {
   userMessage: string
 }
 
+export interface CanvasCourse {
+  id: number
+  name: string
+  courseCode: string
+  term?: string
+  url: string
+}
+
+export interface CanvasAssignment {
+  id: number
+  courseId: number
+  courseName: string
+  name: string
+  dueAt?: string
+  submitted: boolean
+  graded: boolean
+  score?: number
+  pointsPossible?: number
+  url: string
+}
+
+export interface CanvasCourseWithAssignments extends CanvasCourse {
+  assignments: CanvasAssignment[]
+}
+
+export interface CanvasConnectionStatus {
+  connected: boolean
+  name: string
+  loginId: string
+  expiresAt: string
+  daysRemaining: number
+  needsRelink: boolean
+}
+
 /** Port of Ember AthenaReasoning result — pending user confirmation */
 export interface PendingLifeAction {
   signal: string

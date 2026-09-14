@@ -54,8 +54,8 @@ export default function TaskList() {
   }
 
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card p-5 h-full w-full min-h-0 min-w-0 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-base">☰</span>
           <h2 className="font-newsreader text-lg text-ink-primary">Today&apos;s Tasks</h2>
@@ -68,7 +68,7 @@ export default function TaskList() {
       </div>
 
       {tasks.length > 0 && (
-        <div className="flex gap-1.5 mb-4 flex-wrap">
+        <div className="flex gap-1.5 mb-4 flex-wrap flex-shrink-0">
           {filters.map((f) => (
             <button
               key={f}
@@ -89,6 +89,7 @@ export default function TaskList() {
         </div>
       )}
 
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
       {loading ? (
         <div className="space-y-3">
           {[1, 2].map((i) => (
@@ -165,10 +166,11 @@ export default function TaskList() {
           ))}
         </div>
       )}
+      </div>
 
       <form
         onSubmit={handleAddTask}
-        className="mt-3 pt-3 border-t border-border-delicate flex items-center gap-2"
+        className="mt-3 pt-3 border-t border-border-delicate flex items-center gap-2 flex-shrink-0"
       >
         <input
           value={newTask}

@@ -7,9 +7,9 @@ const dummyViews = ['Today', 'This week', 'Tasks', 'Notes', 'Calendar']
 
 export default function WorkspaceViews() {
   return (
-    <div className="card-vellum p-4">
-      <div className="label-caps mb-3">Workspace Views</div>
-      <div className="space-y-0.5">
+    <div className="card-vellum p-4 h-full w-full min-h-0 min-w-0 flex flex-col overflow-hidden">
+      <div className="label-caps mb-3 flex-shrink-0">Workspace Views</div>
+      <div className="space-y-0.5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {dummyViews.map((label) => (
           <DummyControl
             key={label}

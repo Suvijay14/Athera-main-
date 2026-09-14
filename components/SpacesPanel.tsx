@@ -54,14 +54,15 @@ export default function SpacesPanel() {
   }
 
   return (
-    <div className="card-vellum p-4 border-l-2 border-l-sage">
-      <div className="flex items-center justify-between mb-3">
+    <div className="card-vellum p-4 border-l-2 border-l-sage h-full w-full min-h-0 min-w-0 flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="label-caps text-sage">Spaces</div>
         <span className="text-[9px] font-semibold text-sage bg-sage-light px-2 py-0.5 rounded-full uppercase">
           Live
         </span>
       </div>
 
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
       {loading ? (
         <div className="space-y-2">
           {[1, 2].map((i) => (
@@ -144,8 +145,9 @@ export default function SpacesPanel() {
           })}
         </div>
       )}
+      </div>
 
-      <p className="text-[10px] text-ink-faint mt-3 pt-3 border-t border-border-delicate">
+      <p className="text-[10px] text-ink-faint mt-3 pt-3 border-t border-border-delicate flex-shrink-0">
         Drop file widget here · updated {lastUpdated || '—'}
       </p>
     </div>

@@ -37,7 +37,7 @@ export default function SpaceFilesWidget({ spaceSlug }: { spaceSlug: string }) {
         <div className="label-caps text-ochre">Files in {spaceName}</div>
         <span className="text-[10px] text-ink-faint">{files.length} items</span>
       </div>
-      <div className="space-y-1 max-h-[200px] overflow-y-auto">
+      <div className="space-y-1">
         {files.map((f) => {
           if (isEmailItem(f) && f.email) {
             return (

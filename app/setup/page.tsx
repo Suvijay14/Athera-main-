@@ -24,6 +24,15 @@ export default function SetupPage() {
   const [gmailConnected, setGmailConnected] = useState(false)
   const [gmailEmail, setGmailEmail] = useState('')
   const [gmailMsg, setGmailMsg] = useState('')
+  const [canvasConnected, setCanvasConnected] = useState(false)
+  const [canvasName, setCanvasName] = useState('')
+  const [canvasLoginId, setCanvasLoginId] = useState('')
+  const [canvasDaysRemaining, setCanvasDaysRemaining] = useState(0)
+  const [canvasNeedsRelink, setCanvasNeedsRelink] = useState(false)
+  const [canvasMsg, setCanvasMsg] = useState('')
+  const [showCanvasModal, setShowCanvasModal] = useState(false)
+  const [canvasTokenInput, setCanvasTokenInput] = useState('')
+  const [canvasConnecting, setCanvasConnecting] = useState(false)
 
   const refreshGmail = useCallback(async () => {
     try {
@@ -38,6 +47,31 @@ export default function SetupPage() {
     }
   }, [])
 
+  const refreshCanvas = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/canvas/status')
+      if (!res.ok) return
+      const data = (await res.json()) as {
+        connected: boolean
+        name: string
+        loginId: string
+        daysRemaining: number
+        needsRelink: boolean
+      }
+      setCanvasConnected(data.connected)
+      setCanvasName(data.name ?? '')
+      setCanvasLoginId(data.loginId ?? '')
+      setCanvasDaysRemaining(data.daysRemaining ?? 0)
+      setCanvasNeedsRelink(data.needsRelink ?? false)
+    } catch {
+      setCanvasConnected(false)
+      setCanvasName('')
+      setCanvasLoginId('')
+      setCanvasDaysRemaining(0)
+      setCanvasNeedsRelink(false)
+    }
+  }, [])
+
   const refresh = useCallback(async () => {
     setLoading(true)
     const [h, k, p] = await Promise.all([
@@ -48,9 +82,9 @@ export default function SetupPage() {
     setHealth(h)
     setKokoro(k)
     setPermissions(p)
-    await refreshGmail()
+    await Promise.all([refreshGmail(), refreshCanvas()])
     setLoading(false)
-  }, [refreshGmail])
+  }, [refreshGmail, refreshCanvas])
 
   useEffect(() => {
     refresh()
@@ -74,6 +108,48 @@ export default function SetupPage() {
     await fetch('/api/auth/gmail/disconnect', { method: 'POST' })
     setGmailMsg('Gmail disconnected.')
     await refreshGmail()
+  }
+
+  async function handleConnectCanvas() {
+    const token = canvasTokenInput.trim()
+    if (!token) {
+      setCanvasMsg('Paste your bCourses access token first.')
+      return
+    }
+
+    setCanvasConnecting(true)
+    setCanvasMsg('Connecting…')
+    try {
+      const res = await fetch('/api/auth/canvas/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      const data = (await res.json()) as { error?: string; name?: string }
+      if (!res.ok) {
+        setCanvasMsg(
+          data.error === 'invalid_token'
+            ? 'Invalid or expired token. Create a new one in bCourses and try again.'
+            : 'Could not connect to bCourses.'
+        )
+        return
+      }
+      setCanvasMsg('bCourses connected successfully.')
+      setCanvasTokenInput('')
+      setShowCanvasModal(false)
+      await refreshCanvas()
+    } catch {
+      setCanvasMsg('Could not connect to bCourses.')
+    } finally {
+      setCanvasConnecting(false)
+    }
+  }
+
+  async function handleDisconnectCanvas() {
+    setCanvasMsg('Disconnecting…')
+    await fetch('/api/auth/canvas/disconnect', { method: 'POST' })
+    setCanvasMsg('bCourses disconnected.')
+    await refreshCanvas()
   }
 
   async function handleStartOllama() {
@@ -263,9 +339,69 @@ export default function SetupPage() {
         {gmailMsg && <p className="text-xs text-ink-muted mt-2">{gmailMsg}</p>}
       </div>
 
-      {/* Step 5: Mic */}
+      {/* Step 5: bCourses */}
+      <div className="card-vellum p-5 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-medium text-ink-primary">5. Connect bCourses</h2>
+          <StatusBadge ok={canvasConnected} loading={loading} />
+        </div>
+        <p className="text-xs text-ink-muted mb-3">
+          Link UC Berkeley bCourses to show your active courses on the School page. Tokens last 90
+          days — Athena will remind you to re-link before they expire.
+        </p>
+
+        {canvasConnected ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-2 h-2 rounded-full bg-sage" />
+              <span className="text-sage font-medium">bCourses connected</span>
+            </div>
+            {canvasName && (
+              <p className="text-xs text-ink-secondary">
+                Account: <strong>{canvasName}</strong>
+                {canvasLoginId ? ` · ${canvasLoginId}` : ''}
+              </p>
+            )}
+            <p className="text-xs text-ink-faint">
+              Token valid for {canvasDaysRemaining} more day{canvasDaysRemaining === 1 ? '' : 's'}.
+              {canvasNeedsRelink && (
+                <span className="text-ochre"> Re-link soon in bCourses settings.</span>
+              )}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCanvasModal(true)}
+                className="btn-secondary text-sm"
+              >
+                Re-link token
+              </button>
+              <button type="button" onClick={handleDisconnectCanvas} className="btn-secondary text-sm">
+                Disconnect
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-ink-muted">
+              <span className="w-2 h-2 rounded-full bg-ink-faint" />
+              bCourses not connected
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCanvasModal(true)}
+              className="btn-primary text-sm"
+            >
+              Connect bCourses →
+            </button>
+          </div>
+        )}
+        {canvasMsg && <p className="text-xs text-ink-muted mt-2">{canvasMsg}</p>}
+      </div>
+
+      {/* Step 6: Mic */}
       <div className="card-vellum p-5 mb-6">
-        <h2 className="font-medium text-ink-primary mb-2">5. Microphone (in browser)</h2>
+        <h2 className="font-medium text-ink-primary mb-2">6. Microphone (in browser)</h2>
         <p className="text-xs text-ink-muted">
           Use Chrome. When you click Voice, allow microphone access in the browser prompt.
         </p>
@@ -283,6 +419,67 @@ export default function SetupPage() {
           <span className="text-xs text-ink-faint">Start AI (Ollama or Groq) and Kokoro first</span>
         )}
       </div>
+
+      {showCanvasModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="card-vellum w-full max-w-md p-6 shadow-lg">
+            <h3 className="font-newsreader text-xl text-ink-primary mb-2">Connect bCourses</h3>
+            <p className="text-xs text-ink-muted mb-4 leading-relaxed">
+              bCourses uses a personal access token (not Google-style OAuth for student accounts).
+              Create one, paste it here, and Athena stores it locally on this Mac.
+            </p>
+            <ol className="list-decimal ml-4 text-xs text-ink-secondary space-y-2 mb-4">
+              <li>
+                Open{' '}
+                <a
+                  href="https://bcourses.berkeley.edu/profile/settings"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-terracotta underline"
+                >
+                  bCourses → Settings → Approved Integrations
+                </a>
+              </li>
+              <li>Click <strong>+ New Access Token</strong></li>
+              <li>Name it &ldquo;Athena Notebook&rdquo;, leave expiry blank, submit</li>
+              <li>Copy the token and paste it below (shown once)</li>
+            </ol>
+            <input
+              type="password"
+              value={canvasTokenInput}
+              onChange={(e) => setCanvasTokenInput(e.target.value)}
+              placeholder="Paste bCourses access token"
+              className="w-full px-3 py-2 text-sm border border-border-delicate rounded-lg bg-surface-container mb-4"
+              autoComplete="off"
+            />
+            <p className="text-[10px] text-ink-faint mb-4">
+              Tokens expire after 90 days. You will re-link the same way — Setup will warn you
+              beforehand.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCanvasModal(false)
+                  setCanvasTokenInput('')
+                }}
+                className="btn-secondary text-sm"
+                disabled={canvasConnecting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConnectCanvas}
+                className="btn-primary text-sm"
+                disabled={canvasConnecting}
+              >
+                {canvasConnecting ? 'Connecting…' : 'Connect'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
