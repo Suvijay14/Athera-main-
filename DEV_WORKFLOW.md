@@ -22,7 +22,7 @@ http://localhost:3001/api/auth/gmail/callback
 
 Setup → **Connect bCourses** → create a personal access token at
 [bcourses.berkeley.edu/profile/settings](https://bcourses.berkeley.edu/profile/settings)
-→ paste into Athena.
+→ paste into Athera.
 
 - Token stored locally at `.data/canvas-token.json` (gitignored)
 - Expires after **90 days** — Setup and School page show days remaining

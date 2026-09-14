@@ -18,7 +18,7 @@ export interface EmailClassification {
 const CONFIDENCE_THRESHOLD = 0.7
 const BATCH_SIZE = 8
 
-const SYSTEM = `You classify Gmail messages into the user's existing Athena spaces.
+const SYSTEM = `You classify Gmail messages into the user's existing Athera spaces.
 
 Return ONLY valid JSON:
 {

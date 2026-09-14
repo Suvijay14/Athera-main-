@@ -43,7 +43,7 @@ export async function checkPermissions(): Promise<PermissionStatus[]> {
 async function checkScreenshotPermission(): Promise<PermissionStatus> {
   let granted: boolean | 'unknown' = 'unknown'
   try {
-    const tmp = path.join(os.tmpdir(), `athena-perm-${Date.now()}.png`)
+    const tmp = path.join(os.tmpdir(), `athera-perm-${Date.now()}.png`)
     await exec('/usr/sbin/screencapture', ['-x', tmp])
     await fs.unlink(tmp).catch(() => {})
     granted = true

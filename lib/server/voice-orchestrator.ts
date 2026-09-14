@@ -30,7 +30,7 @@ export interface VoiceCommandResult extends AssistantResult {
   fileList?: FileListItem[]
 }
 
-/** Routes life updates through Athena reasoning; otherwise uses tool assistant */
+/** Routes life updates through Athera reasoning; otherwise uses tool assistant */
 export async function runVoiceCommand(
   text: string,
   history: ChatMessage[] = [],

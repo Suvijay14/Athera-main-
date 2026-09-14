@@ -377,7 +377,7 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
         <div className="fixed bottom-6 right-6 z-50 w-[380px] card shadow-modal border border-border-delicate overflow-hidden">
           <div className="bg-surface-vellum px-4 py-3 border-b border-border-delicate flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-ink-primary font-newsreader">Athena Voice</div>
+              <div className="text-sm font-semibold text-ink-primary font-newsreader">Athera Voice</div>
               <div className="text-[10px] text-ink-faint">
                 {kokoro?.running
                   ? `Kokoro · ${kokoro.voice}`
@@ -514,7 +514,7 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
             )}
             {response && (
               <div className="text-xs">
-                <span className="label-caps text-terracotta">Athena</span>
+                <span className="label-caps text-terracotta">Athera</span>
                 <p className="text-ink-secondary mt-1 font-newsreader whitespace-pre-wrap">
                   {response}
                 </p>

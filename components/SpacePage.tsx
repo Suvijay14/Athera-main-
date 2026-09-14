@@ -2,7 +2,7 @@
 
 import GreetingHeader from '@/components/GreetingHeader'
 import ThinkOutLoud from '@/components/ThinkOutLoud'
-import AthenasNote from '@/components/AthenasNote'
+import AtherasNote from '@/components/AtherasNote'
 import TaskList from '@/components/TaskList'
 import WeekCalendar from '@/components/WeekCalendar'
 import DailyRhythm from '@/components/DailyRhythm'
@@ -42,8 +42,8 @@ export default function SpacePage({ space, label, showFilesWidget }: SpacePagePr
                 </ResizableWidget>
               )}
 
-              <ResizableWidget id="athenas-note" defaultHeight={220} minHeight={160} maxHeight={480}>
-                <AthenasNote space={space} />
+              <ResizableWidget id="atheras-note" defaultHeight={220} minHeight={160} maxHeight={480}>
+                <AtherasNote space={space} />
               </ResizableWidget>
 
               <div className="flex gap-4 items-start overflow-x-auto pb-1">

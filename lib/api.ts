@@ -42,7 +42,7 @@ export async function sendCommand(text: string, space = 'school') {
   return {
     response:
       data?.response ??
-      `Athena is offline. Start the API server at ${API_URL} to get real responses.`,
+      `Athera is offline. Start the API server at ${API_URL} to get real responses.`,
     fromAPI: !!data,
   }
 }
@@ -57,7 +57,7 @@ export async function* streamCommand(text: string, space = 'school'): AsyncGener
     })
 
     if (!res.ok || !res.body) {
-      yield `Athena is offline. Start the API server at ${API_URL} to get real responses.`
+      yield `Athera is offline. Start the API server at ${API_URL} to get real responses.`
       return
     }
 
@@ -81,7 +81,7 @@ export async function* streamCommand(text: string, space = 'school'): AsyncGener
       }
     }
   } catch {
-    yield `Athena is offline. Start the API server at ${API_URL} to get real responses.`
+    yield `Athera is offline. Start the API server at ${API_URL} to get real responses.`
   }
 }
 

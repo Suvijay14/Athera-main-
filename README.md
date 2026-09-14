@@ -10,7 +10,7 @@ your own machine — there is no hosted backend, and user data stays in `.data/`
 
 ## Requirements
 
-- **Node 20 LTS** (see `.nvmrc`; `nvm use` will pick it up)
+- **Node 25** (see `.nvmrc`; `nvm use` will pick it up)
 - **macOS** — several tools shell out to `osascript`, `pmset`, `networksetup`
   and `pbcopy`/`pbpaste`, with no fallback on other platforms
 - **Python 3** — only if you want local text-to-speech (Kokoro)

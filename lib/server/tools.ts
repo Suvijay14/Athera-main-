@@ -34,7 +34,7 @@ Available tools (return JSON to use one):
 - open_folder: Reveal folder in Finder. params: { "path": "~/Downloads" }
 - open_app: Open a Mac application. params: { "app": "Safari" }
 - open_file: Find a file by name or path and open it in the default app. params: { "query": "Berkeley syllabus" }
-- create_note: Save a note to ~/Documents/athena-notes/. params: { "title": "My Note", "content": "..." }
+- create_note: Save a note to ~/Documents/athera-notes/. params: { "title": "My Note", "content": "..." }
 - set_reminder: Create a Reminders item. params: { "text": "Buy milk", "dueAt": "ISO date optional" }
 - web_search: Open Google search in browser. params: { "query": "Berkeley CS189" }
 - get_battery: Battery level and charging status. params: {}
@@ -43,9 +43,9 @@ Available tools (return JSON to use one):
 - set_clipboard: Copy text to clipboard. params: { "text": "hello" }
 - get_volume: Get system volume level. params: {}
 - set_volume: Set system volume 0-100. params: { "level": 50 }
-- capabilities: List everything Athena can do. params: {}
-- create_space: Create a new Athena space. params: { "name": "My Project" }
-- list_spaces: List all Athena spaces. params: {}
+- capabilities: List everything Athera can do. params: {}
+- create_space: Create a new Athera space. params: { "name": "My Project" }
+- list_spaces: List all Athera spaces. params: {}
 - check_email: Read recent unread Gmail inbox emails. params: { "count": 5 }
 - search_email: Search Gmail by query. params: { "query": "from:rheanna", "count": 5 }
 - send_email: Send an email via Gmail. params: { "to": "user@example.com", "subject": "Hi", "body": "..." }
@@ -231,7 +231,7 @@ function getTime(): ToolResult {
 async function takeScreenshot(): Promise<ToolResult> {
   const dir = path.join(os.homedir(), 'Desktop')
   await fs.mkdir(dir, { recursive: true })
-  const filename = `athena-screenshot-${Date.now()}.png`
+  const filename = `athera-screenshot-${Date.now()}.png`
   const out = path.join(dir, filename)
   await exec('/usr/sbin/screencapture', ['-x', out])
   return ok(`Screenshot saved to ~/Desktop/${filename}`, {
@@ -465,7 +465,7 @@ async function searchFilePaths(query: string): Promise<string[]> {
   const home = os.homedir()
   let results: string[] = []
 
-  // Spotlight free-text (handles "athena demo notes" → Athena-demo-notes.txt)
+  // Spotlight free-text (handles "athera demo notes" → Athera-demo-notes.txt)
   results = await spotlightSearch(home, trimmed)
 
   // Spotlight per-word intersection for multi-word queries
@@ -484,7 +484,7 @@ async function searchFilePaths(query: string): Promise<string[]> {
     }
   }
 
-  // Filesystem find fallback (*athena*demo*notes*)
+  // Filesystem find fallback (*athera*demo*notes*)
   if (results.length === 0) {
     results = await findSearch(home, trimmed)
   }
@@ -532,15 +532,28 @@ async function openFile(query: string): Promise<ToolResult> {
   )
 }
 
+/**
+ * Notes live in ~/Documents/athera-notes. Installs that predate the
+ * Athena -> Athera rename have a populated ~/Documents/athena-notes; keep
+ * writing there rather than silently splitting a user's notes across two
+ * folders. New installs get the current name.
+ */
+function notesDir(): string {
+  const current = path.join(os.homedir(), 'Documents', 'athera-notes')
+  if (fsSync.existsSync(current)) return current
+  const legacy = path.join(os.homedir(), 'Documents', 'athena-notes')
+  return fsSync.existsSync(legacy) ? legacy : current
+}
+
 function createNote(title: string, content: string): ToolResult {
   const trimmedTitle = title.trim() || 'Untitled'
-  const dir = path.join(os.homedir(), 'Documents', 'athena-notes')
+  const dir = notesDir()
   if (!fsSync.existsSync(dir)) fsSync.mkdirSync(dir, { recursive: true })
   const filename = `${trimmedTitle.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.txt`
   const filepath = path.join(dir, filename)
   const body = `# ${trimmedTitle}\n${new Date().toLocaleString()}\n\n${content}`
   fsSync.writeFileSync(filepath, body)
-  return ok(`Note saved: "${trimmedTitle}" at ~/Documents/athena-notes/${filename}`)
+  return ok(`Note saved: "${trimmedTitle}" at ~/Documents/${path.basename(dir)}/${filename}`)
 }
 
 function parseReminderDueAt(params: Record<string, unknown>): Date | undefined {

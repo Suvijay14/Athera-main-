@@ -193,7 +193,7 @@ export default function SetupPage() {
           <StatusBadge ok={llmReady} loading={loading} />
         </div>
         <p className="text-xs text-ink-muted mb-3">
-          <strong>Ollama</strong> runs locally if installed — preferred. If Ollama is off, Athena
+          <strong>Ollama</strong> runs locally if installed — preferred. If Ollama is off, Athera
           automatically uses <strong>Groq</strong> cloud (set <code className="text-[10px]">GROQ_API_KEY</code>{' '}
           in <code className="text-[10px]">.env.local</code>). Install Ollama from{' '}
           <a href="https://ollama.com" target="_blank" rel="noreferrer" className="text-terracotta underline">
@@ -347,7 +347,7 @@ export default function SetupPage() {
         </div>
         <p className="text-xs text-ink-muted mb-3">
           Link UC Berkeley bCourses to show your active courses on the School page. Tokens last 90
-          days — Athena will remind you to re-link before they expire.
+          days — Athera will remind you to re-link before they expire.
         </p>
 
         {canvasConnected ? (
@@ -426,7 +426,7 @@ export default function SetupPage() {
             <h3 className="font-newsreader text-xl text-ink-primary mb-2">Connect bCourses</h3>
             <p className="text-xs text-ink-muted mb-4 leading-relaxed">
               bCourses uses a personal access token (not Google-style OAuth for student accounts).
-              Create one, paste it here, and Athena stores it locally on this Mac.
+              Create one, paste it here, and Athera stores it locally on this Mac.
             </p>
             <ol className="list-decimal ml-4 text-xs text-ink-secondary space-y-2 mb-4">
               <li>
@@ -441,7 +441,7 @@ export default function SetupPage() {
                 </a>
               </li>
               <li>Click <strong>+ New Access Token</strong></li>
-              <li>Name it &ldquo;Athena Notebook&rdquo;, leave expiry blank, submit</li>
+              <li>Name it &ldquo;Athera Notebook&rdquo;, leave expiry blank, submit</li>
               <li>Copy the token and paste it below (shown once)</li>
             </ol>
             <input

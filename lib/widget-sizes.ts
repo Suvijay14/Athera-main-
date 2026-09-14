@@ -1,5 +1,23 @@
-const STORAGE_KEY = 'athena-widget-sizes'
+const STORAGE_KEY = 'athera-widget-sizes'
+
+// Keys written by earlier versions, before the Athena -> Athera rename. These
+// are literal historical strings — they must keep the old spelling or the saved
+// layouts in existing browsers become unreachable.
+const LEGACY_SIZES_KEY = 'athena-widget-sizes'
 const LEGACY_HEIGHTS_KEY = 'athena-widget-heights'
+
+/** Widget ids that were renamed alongside the product. */
+const LEGACY_WIDGET_IDS: Record<string, string> = {
+  'athenas-note': 'atheras-note',
+}
+
+function remapIds(sizes: WidgetSizes): WidgetSizes {
+  const out: WidgetSizes = {}
+  for (const [id, size] of Object.entries(sizes)) {
+    out[LEGACY_WIDGET_IDS[id] ?? id] = size
+  }
+  return out
+}
 
 export interface WidgetSize {
   height?: number
@@ -16,17 +34,26 @@ function readRaw(): WidgetSizes {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw) as WidgetSizes
 
-    const legacy = localStorage.getItem(LEGACY_HEIGHTS_KEY)
-    if (!legacy) return {}
+    const legacySizes = localStorage.getItem(LEGACY_SIZES_KEY)
+    if (legacySizes) {
+      const migrated = remapIds(JSON.parse(legacySizes) as WidgetSizes)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
+      localStorage.removeItem(LEGACY_SIZES_KEY)
+      return migrated
+    }
 
-    const heights = JSON.parse(legacy) as Record<string, number>
+    const legacyHeights = localStorage.getItem(LEGACY_HEIGHTS_KEY)
+    if (!legacyHeights) return {}
+
+    const heights = JSON.parse(legacyHeights) as Record<string, number>
     const migrated: WidgetSizes = {}
     for (const [id, height] of Object.entries(heights)) {
       migrated[id] = { height }
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
+    const remapped = remapIds(migrated)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(remapped))
     localStorage.removeItem(LEGACY_HEIGHTS_KEY)
-    return migrated
+    return remapped
   } catch {
     return {}
   }

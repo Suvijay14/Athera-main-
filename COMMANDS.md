@@ -1,4 +1,4 @@
-# Athena Agent — Command Status
+# Athera Agent — Command Status
 
 Last updated: Sep 10, 2026
 

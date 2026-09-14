@@ -144,7 +144,7 @@ function escapeCell(value: string): string {
 
 export function writeCommandsFile(data: CommandsData): void {
   const lines = [
-    '# Athena Agent — Command Status',
+    '# Athera Agent — Command Status',
     '',
     `Last updated: ${data.lastUpdated}`,
     '',

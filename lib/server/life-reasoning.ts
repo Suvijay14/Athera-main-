@@ -31,7 +31,7 @@ Return ONLY valid JSON:
 }
 
 Important: userMessage should ASK the user for confirmation.
-Example: "I can create a new Athena space and scan your files for anything related. Want me to do that?"
+Example: "I can create a new Athera space and scan your files for anything related. Want me to do that?"
 
 For semester_started: use actionType "create_space" with actionTarget like "Fall 2026 Berkeley" and scan for course files.
 

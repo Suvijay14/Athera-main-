@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import DummyControl from '@/components/DummyControl'
 import { fetchNote } from '@/lib/api'
 
-export default function AthenasNote({ space }: { space: string }) {
+export default function AtherasNote({ space }: { space: string }) {
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -21,7 +21,7 @@ export default function AthenasNote({ space }: { space: string }) {
         <div className="w-5 h-5 rounded-full bg-terracotta-light flex items-center justify-center">
           <span className="text-terracotta text-xs">✦</span>
         </div>
-        <span className="label-caps text-terracotta">Athena&apos;s Note</span>
+        <span className="label-caps text-terracotta">Athera&apos;s Note</span>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">

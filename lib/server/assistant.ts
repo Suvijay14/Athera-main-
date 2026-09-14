@@ -3,7 +3,7 @@ import { llmChat } from './llm'
 import { runTool, TOOL_CATALOG, type ToolResult } from './tools'
 import type { PendingApproval, PendingFileItem } from '@/lib/types'
 
-const SYSTEM = `You are Athena, an intelligent personal assistant running on the user's Mac. You have access to these tools:
+const SYSTEM = `You are Athera, an intelligent personal assistant running on the user's Mac. You have access to these tools:
 
 - time: get current time and date
 - list_files: list files in a directory

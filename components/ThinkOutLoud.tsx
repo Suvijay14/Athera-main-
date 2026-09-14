@@ -53,7 +53,7 @@ export default function ThinkOutLoud({ space, onResponse }: ThinkOutLoudProps) {
           />
           <span className="label-caps">Think Out Loud</span>
         </div>
-        <span className="text-xs text-ink-faint">Athena AI Assistant</span>
+        <span className="text-xs text-ink-faint">Athera AI Assistant</span>
       </div>
 
       <div className="flex items-center gap-3">

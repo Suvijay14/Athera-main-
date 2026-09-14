@@ -3,7 +3,7 @@ import './globals.css'
 import AppShell from '@/components/AppShell'
 
 export const metadata: Metadata = {
-  title: 'Athena Notebook',
+  title: 'Athera Notebook',
   description: 'Your life, organized.',
 }
 

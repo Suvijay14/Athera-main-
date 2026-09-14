@@ -1,4 +1,4 @@
-/** Voice assistant API — built into athena-web (same origin, no separate agent install) */
+/** Voice assistant API — built into athera-web (same origin, no separate agent install) */
 
 export interface AgentHealth {
   status: string

@@ -44,7 +44,7 @@ export default function Sidebar() {
             <span className="text-white text-xs">A</span>
           </div>
           <div>
-            <div className="text-sm font-semibold text-ink-primary font-newsreader">Athena</div>
+            <div className="text-sm font-semibold text-ink-primary font-newsreader">Athera</div>
             <div className="label-caps text-[9px]">Notebook</div>
           </div>
         </div>

@@ -39,7 +39,7 @@ export default function FileApprovalWidget() {
 
   function onDragStart(e: React.DragEvent) {
     if (!pending) return
-    e.dataTransfer.setData('application/x-athena-files', pending.id)
+    e.dataTransfer.setData('application/x-athera-files', pending.id)
     e.dataTransfer.setData('text/plain', pending.id)
     e.dataTransfer.effectAllowed = 'move'
   }
@@ -138,7 +138,7 @@ export function SpaceDropZone({
       onDrop={async (e) => {
         e.preventDefault()
         setOver(false)
-        const id = e.dataTransfer.getData('application/x-athena-files')
+        const id = e.dataTransfer.getData('application/x-athera-files')
         if (id === pending.id) await approveForSpace(slug, name)
       }}
     >
