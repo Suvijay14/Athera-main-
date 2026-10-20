@@ -13,7 +13,3 @@ export interface WorkspaceDef {
 
 /** Empty — legacy /school,/work,/personal routes redirect to workspace overview. */
 export const CORE_WORKSPACES: WorkspaceDef[] = []
-
-export function workspaceFromPath(_pathname: string): WorkspaceDef | null {
-  return null
-}

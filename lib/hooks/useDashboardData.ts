@@ -12,7 +12,7 @@ type DashboardHomeResponse = {
   suggestionNote: string
 }
 
-export function useDashboardData(_noteSpace = 'school') {
+export function useDashboardData() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [suggestionNote, setSuggestionNote] = useState('')

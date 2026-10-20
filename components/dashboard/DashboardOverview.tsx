@@ -11,7 +11,7 @@ import { useComponentLab } from '@/lib/hooks/useComponentLab'
 import type { ComponentId } from '@/lib/components/types'
 
 export default function DashboardOverview() {
-  const { tasks, suggestionNote, loading } = useDashboardData('school')
+  const { tasks, suggestionNote, loading } = useDashboardData()
   const {
     approvedIds,
     dashboardWidgets,
