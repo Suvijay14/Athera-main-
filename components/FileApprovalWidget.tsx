@@ -6,10 +6,20 @@ import { usePendingFiles } from '@/components/PendingFilesContext'
 
 export default function FileApprovalWidget() {
   const { pending, dismiss } = usePendingFiles()
+  const [legacyFilesystemApi, setLegacyFilesystemApi] = useState<boolean | null>(null)
   const [pos, setPos] = useState({ x: 0, y: 120 })
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(
     null
   )
+
+  useEffect(() => {
+    fetch('/api/legacy/status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { filesystemApi?: boolean } | null) => {
+        setLegacyFilesystemApi(d?.filesystemApi === true)
+      })
+      .catch(() => setLegacyFilesystemApi(false))
+  }, [])
 
   useEffect(() => {
     if (pending && typeof window !== 'undefined') {
@@ -19,6 +29,33 @@ export default function FileApprovalWidget() {
   }, [pending?.id])
 
   if (!pending) return null
+
+  if (legacyFilesystemApi === false) {
+    return (
+      <div
+        className="fixed z-[60] w-[320px] card shadow-modal border border-border-delicate"
+        style={{ left: Math.max(24, typeof window !== 'undefined' ? window.innerWidth / 2 - 160 : 24), top: 120 }}
+      >
+        <div className="p-4 space-y-2">
+          <p className="text-sm font-medium text-ink-primary">
+            {pending.label} · {pending.files.length} files
+          </p>
+          <p className="text-xs text-ink-muted">
+            Drag-to-space filing uses the legacy filesystem API, which is off. Add work in{' '}
+            <span className="font-medium">/workspace</span> instead, or set{' '}
+            <code className="text-[10px]">LEGACY_FILESYSTEM_API=true</code> in local dev.
+          </p>
+          <button
+            type="button"
+            onClick={dismiss}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   function onPointerDown(e: React.PointerEvent) {
     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y }

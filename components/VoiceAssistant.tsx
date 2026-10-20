@@ -75,7 +75,7 @@ export function VoiceSidebarButton() {
         ctx.setOpen(true)
         if (ctx.state === 'ready') ctx.startListening()
       }}
-      className="mx-3 mb-3 flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-terracotta text-white text-sm font-medium hover:bg-terracotta-soft transition-colors w-[calc(100%-1.5rem)]"
+      className="athera-voice-btn mx-3 mb-3 flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors w-[calc(100%-1.5rem)]"
     >
       <span className="text-lg">🎙</span>
       Voice
@@ -209,13 +209,39 @@ export function VoiceAssistantProvider({ children }: { children: ReactNode }) {
       setError('')
       setFeedbackMode(null)
 
-      const result = await sendVoiceCommand(
-        text,
-        history,
-        pendingLifeRef.current,
-        pendingEmailRef.current,
-        pendingToolRef.current
-      )
+      let workspaceLine: string | null = null
+      try {
+        const wsRes = await fetch('/api/workspace/voice-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        })
+        if (wsRes.ok) {
+          const wsData = (await wsRes.json()) as {
+            handled?: boolean
+            response?: string
+            navigate?: string
+          }
+          if (wsData.handled && wsData.response) {
+            workspaceLine = wsData.response
+            if (wsData.navigate && typeof window !== 'undefined') {
+              window.location.assign(wsData.navigate)
+            }
+          }
+        }
+      } catch {
+        /* fall through to agent */
+      }
+
+      const result = workspaceLine
+        ? { response: workspaceLine, toolsUsed: ['workspace_command'] }
+        : await sendVoiceCommand(
+            text,
+            history,
+            pendingLifeRef.current,
+            pendingEmailRef.current,
+            pendingToolRef.current
+          )
       if (!result) {
         setError('Voice not ready. Start Ollama or configure Groq in .env.local.')
         setState('offline')

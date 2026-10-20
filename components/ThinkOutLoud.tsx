@@ -1,48 +1,73 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { streamCommand, sendCommand } from '@/lib/api'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { checkAgentHealth, isLlmReady, llmStatusLabel, sendVoiceCommand } from '@/lib/agent'
 
 interface ThinkOutLoudProps {
-  space: string
+  space?: string
   onResponse?: (text: string) => void
 }
 
-export default function ThinkOutLoud({ space, onResponse }: ThinkOutLoudProps) {
+export default function ThinkOutLoud({ onResponse }: ThinkOutLoudProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [streamedText, setStreamedText] = useState('')
+  const [llmLabel, setLlmLabel] = useState('Checking AI…')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  async function handleSubmit(text: string = input) {
-    if (!text.trim() || isLoading) return
+  useEffect(() => {
+    checkAgentHealth().then((health) => {
+      setLlmLabel(isLlmReady(health) ? llmStatusLabel(health) : 'AI offline — /setup or Groq in .env')
+    })
+  }, [])
 
-    setIsLoading(true)
-    setStreamedText('')
-    const query = text.trim()
-    setInput('')
+  const handleSubmit = useCallback(
+    async (text: string = input) => {
+      if (!text.trim() || isLoading) return
 
-    try {
-      let full = ''
-      let gotChunk = false
+      setIsLoading(true)
+      setStreamedText('')
+      const query = text.trim()
+      setInput('')
 
-      for await (const chunk of streamCommand(query, space)) {
-        full += chunk
-        gotChunk = true
-        setStreamedText(full)
+      try {
+        let response = ''
+
+        const wsRes = await fetch('/api/workspace/voice-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: query }),
+        })
+        if (wsRes.ok) {
+          const wsData = (await wsRes.json()) as {
+            handled?: boolean
+            response?: string
+            navigate?: string
+          }
+          if (wsData.handled && wsData.response) {
+            response = wsData.response
+            if (wsData.navigate && typeof window !== 'undefined') {
+              window.location.assign(wsData.navigate)
+            }
+          }
+        }
+
+        if (!response) {
+          const result = await sendVoiceCommand(query)
+          response =
+            result?.response ??
+            'Voice assistant is offline. Start Ollama or set GROQ_API_KEY, then refresh.'
+        }
+
+        setStreamedText(response)
+        onResponse?.(response)
+      } finally {
+        setIsLoading(false)
       }
-
-      if (!gotChunk) {
-        const result = await sendCommand(query, space)
-        setStreamedText(result.response)
-        full = result.response
-      }
-
-      onResponse?.(full)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    },
+    [input, isLoading, onResponse]
+  )
 
   return (
     <div className="card p-5">
@@ -53,7 +78,7 @@ export default function ThinkOutLoud({ space, onResponse }: ThinkOutLoudProps) {
           />
           <span className="label-caps">Think Out Loud</span>
         </div>
-        <span className="text-xs text-ink-faint">Athera AI Assistant</span>
+        <span className="text-xs text-ink-faint">{llmLabel}</span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -65,13 +90,14 @@ export default function ThinkOutLoud({ space, onResponse }: ThinkOutLoudProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          onKeyDown={(e) => e.key === 'Enter' && void handleSubmit()}
           placeholder="What's on your mind? Ask anything..."
           className="flex-1 bg-transparent text-sm text-ink-primary placeholder-ink-faint outline-none"
           disabled={isLoading}
         />
         <button
-          onClick={() => handleSubmit()}
+          type="button"
+          onClick={() => void handleSubmit()}
           disabled={!input.trim() || isLoading}
           className="btn-primary flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >

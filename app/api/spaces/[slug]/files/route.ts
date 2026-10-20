@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+import {
+  legacyFilesystemApiBlockedResponse,
+  legacyFilesystemApiEnabled,
+} from '@/lib/legacy/filesystem-api'
 import { addFilesToSpace } from '@/lib/server/spaces'
 import type { SpaceFile } from '@/lib/types'
 
@@ -6,6 +11,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  if (!legacyFilesystemApiEnabled()) {
+    return legacyFilesystemApiBlockedResponse()
+  }
   const { files, spaceName } = (await req.json()) as {
     files?: SpaceFile[]
     spaceName?: string

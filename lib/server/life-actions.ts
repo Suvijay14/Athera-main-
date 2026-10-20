@@ -125,6 +125,12 @@ function scanKeywords(result: PendingLifeAction): string[] {
 
 /** Port of Ember handleAction — executes after user confirms */
 export async function executeLifeAction(result: PendingLifeAction): Promise<string> {
+  const { legacyFilesystemApiEnabled } = await import('@/lib/legacy/filesystem-api')
+  if (!legacyFilesystemApiEnabled()) {
+    const { executeLifeActionInWorkspace } = await import('./life-actions-workspace')
+    return executeLifeActionInWorkspace(result)
+  }
+
   const actionType = normalizeActionType(result.actionType)
   const keywords = scanKeywords(result)
 

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import AppShell from '@/components/AppShell'
+import { ShellGate } from '@/components/ShellGate'
 
 export const metadata: Metadata = {
-  title: 'Athera Notebook',
-  description: 'Your life, organized.',
+  title: 'Athera · Life, in context',
+  description: 'Your unified day — Contextual Serenity UI 2.0',
 }
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AppShell>{children}</AppShell>
+        <ShellGate>{children}</ShellGate>
       </body>
     </html>
   )

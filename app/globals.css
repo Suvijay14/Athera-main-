@@ -1,17 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;1,400&family=Plus+Jakarta+Sans:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --canvas-base: #fbf9f5;
+  --canvas-base: #eef2ec;
 }
 
 body {
   background-color: var(--canvas-base);
-  color: #221f1d;
+  color: #181d19;
   font-family: 'Inter', sans-serif;
+}
+
+.ui-v1 {
+  --canvas-base: #fbf9f5;
+}
+
+.ui-v1 body,
+body.ui-v1 {
+  background-color: #fbf9f5;
+  color: #221f1d;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
 }
 
 @layer components {
@@ -22,26 +38,52 @@ body {
     @apply bg-surface-vellum border border-border-delicate rounded-lg shadow-card;
   }
   .btn-primary {
-    @apply bg-terracotta text-white px-4 py-2 rounded-md text-sm font-medium
-           hover:bg-terracotta-soft transition-all duration-150
-           shadow-sm hover:-translate-y-px;
+    @apply bg-primary-container text-on-primary px-5 py-2.5 rounded-full text-sm font-jakarta font-semibold
+           hover:bg-primary transition-all duration-150 shadow-sm;
   }
   .btn-secondary {
-    @apply bg-surface-vellum border border-border-delicate text-ink-primary
-           px-4 py-2 rounded-md text-sm font-medium
+    @apply bg-surface-container-lowest border border-outline-variant/60 text-primary
+           px-5 py-2.5 rounded-full text-sm font-jakarta font-semibold
            hover:bg-surface-container transition-colors duration-150;
+  }
+  .ui-v1 .btn-primary {
+    @apply bg-terracotta text-white rounded-md font-inter font-medium hover:bg-terracotta-soft;
+  }
+  .ui-v1 .btn-secondary {
+    @apply bg-surface-vellum border-border-delicate text-ink-primary rounded-md font-inter font-medium;
+  }
+  .card-v2 {
+    @apply bg-surface-container-lowest border border-border-serenity rounded-2xl shadow-serenity;
+  }
+  .ui-v2 .card-vellum {
+    @apply bg-surface-container-lowest border-border-serenity rounded-2xl shadow-serenity;
   }
   .space-pill {
     @apply px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150;
   }
   .space-pill-active {
-    @apply bg-terracotta text-white;
+    @apply bg-primary-container text-on-primary;
   }
   .space-pill-inactive {
+    @apply text-on-surface-variant hover:text-on-surface hover:bg-surface-container;
+  }
+  .ui-v1 .space-pill-active {
+    @apply bg-terracotta text-white;
+  }
+  .ui-v1 .space-pill-inactive {
     @apply text-ink-muted hover:text-ink-primary;
   }
   .label-caps {
-    @apply text-[11px] font-semibold tracking-widest uppercase text-ink-muted;
+    @apply text-label-sm font-jakarta tracking-widest uppercase text-on-surface-variant;
+  }
+  .ui-v1 .label-caps {
+    @apply text-[11px] font-semibold text-ink-muted;
+  }
+  .athera-voice-btn {
+    @apply rounded-full bg-primary-container text-on-primary font-jakarta font-semibold hover:bg-primary;
+  }
+  .ui-v1 .athera-voice-btn {
+    @apply rounded-lg bg-terracotta text-white hover:bg-terracotta-soft font-inter font-medium;
   }
   .dummy-control {
     @apply outline outline-2 outline-red-500 outline-offset-2 bg-red-50/70 cursor-not-allowed;

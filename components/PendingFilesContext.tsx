@@ -46,6 +46,9 @@ export function PendingFilesProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ files, spaceName }),
       })
 
+      if (res.status === 410) {
+        return false
+      }
       if (!res.ok) return false
 
       setLastAddedSlug(slug)

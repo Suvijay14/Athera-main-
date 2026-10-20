@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+import {
+  legacyFilesystemApiBlockedResponse,
+  legacyFilesystemApiEnabled,
+} from '@/lib/legacy/filesystem-api'
 import { deleteSpace, getSpaceBySlug } from '@/lib/server/spaces'
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  if (!legacyFilesystemApiEnabled()) {
+    return legacyFilesystemApiBlockedResponse()
+  }
   const space = getSpaceBySlug(params.slug)
   if (!space) {
     return NextResponse.json({ error: 'Space not found' }, { status: 404 })

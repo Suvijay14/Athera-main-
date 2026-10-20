@@ -1,5 +1,5 @@
-import SpacePage from '@/components/SpacePage'
+import { redirect } from 'next/navigation'
 
-export default function WorkSpace() {
-  return <SpacePage space="work" label="Work" />
+export default function LegacyWorkRedirect() {
+  redirect('/')
 }

@@ -1,0 +1,152 @@
+---
+description: Athena project rules. Product principles, architecture contracts, and working agreement.
+alwaysApply: false
+---
+
+# 1. What we are building
+
+Athena is an adaptive workspace for owner-operated and multi-location businesses. It starts as a minimal, generic workspace and reshapes itself around how the business actually works, based on observed behavior. The owner always stays in control.
+
+MVP scope: a flexible workspace (work items, custom fields, generated views), an adaptation loop (detect, suggest, preview, accept/dismiss, undo), and instrumentation that proves adaptations are accepted and still used two weeks later.
+
+Out of scope for now: voice, Ollama, file scanning, Gmail/calendar integrations, teams and permissions, billing, native apps. Do not modify or import legacy voice or Ollama code. All new work lives in the paths listed in section 4.
+
+# 2. Non-negotiable principles
+
+1. Owner control. Nothing changes the workspace without an explicit Accept. No silent adaptations, ever.
+2. Reversibility. Every accepted change can be undone in one click, and undo restores data exactly as it was.
+3. Generic core. work_items has only title, due_date, notes. Everything else is a custom field. Never add domain columns such as client, status, or amount to work_items.
+4. Data-driven UI. No component may hard-code a custom field or a view. Components render from field_definitions and view_definitions.
+5. Explainable. Every suggestion carries a plain-language reason that cites concrete evidence from the user's own data.
+6. Deterministic detection. Detectors are pure functions with no network calls and no LLM calls. An LLM may later be used only to phrase the reason text, never to decide whether to suggest.
+7. Measurable. Every user-visible adaptation event is logged to the events table.
+8. Quiet by default. At most one pending suggestion is shown at a time. Dismissed suggestions are never re-shown for 30 days.
+
+# 3. Stack and conventions
+
+- Next.js (App Router), TypeScript in strict mode, Tailwind CSS, Supabase (Auth + Postgres). Use @supabase/ssr for server and browser clients.
+- Validation with zod at every server boundary (server actions, route handlers). Infer types from schemas where possible.
+- Tests with Vitest. Pure logic (detectors, engine, operations, templates) must have unit tests. Write the tests first for detectors and operations.
+- No `any`. No non-null assertions without a comment. No default exports except Next.js pages/layouts/route files.
+- Server code never trusts the client for workspace_id. Derive it from the authenticated user via getCurrentWorkspace().
+- All writes go through server actions or route handlers. No direct client-side table writes.
+- Dates: store as UTC, date-only fields as `date`. Use date-fns for date math, never manual millisecond arithmetic.
+- Naming: files kebab-case, components PascalCase, DB columns snake_case, TS properties camelCase (map at the data-access layer).
+- Prefer small, composable modules. Max ~200 lines per file; split when larger.
+- Before adding a dependency, check whether the repo already has one that does the job. State why in your summary when you add one.
+
+# 4. Repository layout (create as needed)
+
+    app/(auth)/            login, signup
+    app/(app)/app/         authenticated workspace routes
+    app/(app)/onboarding/  onboarding flow
+    app/api/               route handlers (cron, webhooks)
+    components/workspace/  data-driven UI (FieldRenderer, views, forms)
+    components/adaptation/ SuggestionCard, PreviewDrawer, ChangeHistory
+    lib/supabase/          server.ts, client.ts, middleware helper
+    lib/db/                typed data-access functions, one file per table group
+    lib/adaptation/        types.ts, operations.ts, engine.ts, apply.ts, detectors/*
+    lib/onboarding/        templates.ts (pure)
+    lib/events.ts          typed track()
+    supabase/migrations/   timestamped SQL migrations, never edit applied ones
+    scripts/               seed-demo.ts and other dev scripts
+
+# 5. Data model contract
+
+All tables have workspace_id and RLS scoping rows to workspaces owned by auth.uid(). Never disable RLS to make something work; fix the policy.
+
+- workspaces: id, owner_id, name, business_type, item_label (what the owner calls an item: Job, Order, Task), onboarding_answers jsonb, created_at.
+- field_definitions: id, workspace_id, key (immutable slug, unique per workspace), label (renamable), type ('text'|'number'|'date'|'select'|'checkbox'), options jsonb, visible bool, position int, source ('onboarding'|'user'|'athena'), created_at.
+- work_items: id, workspace_id, title (not null), due_date, notes, data jsonb (custom field values keyed by field key), created_at, updated_at.
+- view_definitions: id, workspace_id, name, type ('list'|'grouped'|'board'), group_by_field (a field key), filters jsonb, visible bool, position int, source, created_at.
+- recurrence_rules: id, workspace_id, template jsonb (title, notes, data), interval_days, next_run date, active bool, source, created_at.
+- suggestions: id, workspace_id, type, status ('pending'|'shown'|'accepted'|'dismissed'|'undone'|'expired'), reason text, evidence jsonb, confidence numeric, operations jsonb, dedupe_key text, created_at, resolved_at.
+- change_log: id, workspace_id, suggestion_id, operations jsonb, inverse_operations jsonb, applied_at, undone_at.
+- events: id, workspace_id, user_id, name, props jsonb, created_at.
+
+Rules:
+- A field's key never changes after creation. Renaming changes label only.
+- Hiding a field or view never deletes its data.
+- A default "All" list view always exists in code and is never stored or deletable.
+
+# 6. Operations contract (the heart of the system)
+
+Every workspace change made by Athena is expressed as a list of typed Operations. Apply and undo both just execute operation lists, so there is exactly one code path for mutating adaptive structure.
+
+```ts
+type FieldType = 'text' | 'number' | 'date' | 'select' | 'checkbox';
+
+type Operation =
+  | { op: 'create_field'; field: { key: string; label: string; type: FieldType; options?: string[] } }
+  | { op: 'delete_field'; key: string }
+  | { op: 'set_field_visibility'; key: string; visible: boolean }
+  | { op: 'update_field'; key: string; patch: { label?: string; options?: string[] } }
+  | { op: 'create_view'; view: { name: string; type: 'list' | 'grouped' | 'board'; groupByField?: string } }
+  | { op: 'delete_view'; viewId: string }
+  | { op: 'backfill_field'; key: string; values: Record<string, unknown> } // itemId -> value, null clears
+  | { op: 'create_recurrence_rule'; rule: { template: unknown; intervalDays: number; nextRun: string } }
+  | { op: 'delete_recurrence_rule'; ruleId: string };
+```
+
+Rules:
+- Detectors return `operations` only. They never compute inverses.
+- apply.ts computes `inverse_operations` at apply time from the current database state (for a backfill, snapshot each item's previous value, using null where the key was absent), in the same transaction as the change, then writes change_log.
+- Undo executes inverse_operations in reverse order. After apply then undo, the workspace data must be identical to before (assert this in a test).
+- Every operation must be idempotent where possible and must fail loudly (throw, roll back the whole transaction) rather than partially apply.
+- Backfill never overwrites a non-empty existing value unless the operation explicitly says so, and never touches notes.
+- Each operation has a human-readable describe(op) used by the preview and the change history. Keep it in operations.ts.
+
+# 7. Adaptation lifecycle
+
+1. Trigger: runAdaptation(workspaceId) is called (debounced) after item create/update and on workspace load.
+2. Detect: run every detector over a read-only context { items, fields, views, recurrenceRules, recentEvents, now }.
+3. Filter: drop drafts whose dedupe_key exists as pending/shown/accepted, or dismissed within 30 days. Keep at most one, highest confidence.
+4. Persist: insert as suggestion with status 'pending'.
+5. Show: UI marks it 'shown' and logs suggestion_shown once.
+6. Preview: read-only computation of what would change: affected item count, 3 sample rows, new field/view names. No writes.
+7. Accept: apply in one transaction, write change_log, status 'accepted'.
+8. Dismiss: status 'dismissed', resolved_at set. Undo: run inverse, status 'undone'.
+9. Retention: 14 days after acceptance, a daily job decides whether the change is still in use and logs adaptation_retained or adaptation_abandoned.
+
+# 8. Detector rules
+
+- Signature: (ctx) => SuggestionDraft | null. Pure and synchronous.
+- SuggestionDraft: { type, reason, evidence, confidence (0-1), operations, dedupeKey }.
+- Thresholds are named constants at the top of each detector file, with a comment explaining why. Do not inline magic numbers.
+- Reason text must contain a concrete number and a concrete example from the user's data. Example: "You've created 6 tasks for Rivera Plumbing. Want a Clients view?"
+- Prefer false negatives over false positives. A wrong suggestion costs trust. If unsure, return null.
+- Each detector has a test suite with at least: fires on clear data, silent on clean data, silent below threshold, silent when already adapted, stable dedupeKey across runs.
+
+# 9. Events
+
+Use only these names, through the typed track() helper in lib/events.ts: onboarding_completed, item_created, item_edited, suggestion_shown, suggestion_previewed, suggestion_accepted, suggestion_dismissed, suggestion_undone, view_opened, adaptation_retained, adaptation_abandoned. Props must include suggestion_id and suggestion_type where relevant. Never put item titles, notes, or other user content in event props.
+
+# 10. Security and privacy
+
+- RLS on every table. Policies reference workspaces.owner_id = auth.uid().
+- Service-role key is used only in server-only modules and cron routes, never imported in client code.
+- Cron/route handlers that are not user-authenticated require a secret header (CRON_SECRET).
+- Validate every input with zod. Escape nothing manually; rely on React and parameterized queries.
+- Environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET. Maintain .env.example. Never commit secrets.
+
+# 11. UI and UX rules
+
+- The UI should feel calm and plain. Small business owners are not power users. Use the workspace's item_label (e.g. "Job"), not "work item", in user-facing text.
+- Every list has an empty state, loading state, and error state.
+- Interactive elements are keyboard accessible with visible focus. Mobile-first layouts.
+- Adaptation UI copy is short, specific, and never says "AI". Say what Athena noticed and what it will change.
+- Every change shows an Undo within the toast and in the "What Athena changed" page.
+
+# 12. How to work (applies to every task)
+
+1. First inspect the existing repo and tell me what you found and what you will change, before writing code. If the request is ambiguous, ask up to 3 specific questions instead of guessing.
+2. Work in small steps. Do not mix unrelated changes in one pass.
+3. Write or update tests alongside logic. Run tests, the type checker, and the linter before declaring done, and report the results honestly, including failures.
+4. Never fabricate APIs, column names, or library behavior. If unsure, check the installed version in node_modules or the Supabase docs, or ask.
+5. Do not refactor or reformat files unrelated to the task.
+6. Migrations are append-only: create a new timestamped file, never edit an applied one.
+7. When finished, give a short summary: files created/changed, commands I must run manually (migrations, env vars), decisions you made that I should review, and anything left incomplete.
+
+# 13. Definition of done
+
+A task is done when: it type-checks with no errors, tests pass, RLS is in place for any new table, no hard-coded fields or views exist in components, new events are logged, empty/loading/error states exist, and the summary from section 12 is provided.

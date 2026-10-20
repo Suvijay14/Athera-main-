@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy separate API server (NEXT_PUBLIC_API_URL). Merged shell uses Supabase
+ * workspace routes and /api/workspace/* — do not add new callers from product UI.
+ */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 async function safeFetch(url: string, options?: RequestInit) {

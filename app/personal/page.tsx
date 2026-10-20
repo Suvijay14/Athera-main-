@@ -1,5 +1,5 @@
-import SpacePage from '@/components/SpacePage'
+import { redirect } from 'next/navigation'
 
-export default function PersonalSpace() {
-  return <SpacePage space="personal" label="Personal" />
+export default function LegacyPersonalRedirect() {
+  redirect('/')
 }

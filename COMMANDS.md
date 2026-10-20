@@ -1,13 +1,13 @@
 # Athera Agent — Command Status
 
-Last updated: Sep 10, 2026
+Last updated: Oct 19, 2026
 
 ## ✅ Confirmed Working
 
 | Command | Example phrase | Tool called | Notes |
 |---------|---------------|-------------|-------|
-| List files | "list all the files on my desktop" | list_files | Approval widget appears; drag to a Space adds files (74 files tested in My Ideas) |
-| Create space | "create a space called My Ideas" | create_space | Space appears in Spaces panel and top nav |
+| List files | "list all the files on my desktop" | list_files | Approval widget appears; drag-to-space filing requires `LEGACY_FILESYSTEM_API=true` (otherwise dismissible notice) |
+| Create space | "create a space called My Ideas" | create_space | Creates a Supabase workspace space (sidebar). Legacy filesystem spaces need `LEGACY_FILESYSTEM_API=true` in dev |
 | Life update | "I started a new semester at UC Berkeley" → "yes" | life_action | Creates space, scans Berkeley/semester files; retry-after-delete bug fixed Sep 10 |
 | Delete space | trash icon on Spaces panel row | DELETE /api/spaces/[slug] | Removes space metadata only; files on disk untouched |
 | Voice pipeline | tap mic → speak | /api/voice/chat | Ollama llama3.1:8b + Kokoro af_bella TTS verified |

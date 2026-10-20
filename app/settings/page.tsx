@@ -1,10 +1,15 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { fetchDeviceProfile, type DeviceProfile } from '@/lib/agent'
+import { useSetUiVersion, useUiVersion } from '@/lib/hooks/useUiVersion'
+import type { UiVersion } from '@/lib/ui-version'
 
 export default function SettingsPage() {
+  const uiVersion = useUiVersion()
+  const setUiVersion = useSetUiVersion()
   const [device, setDevice] = useState<DeviceProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -53,6 +58,43 @@ export default function SettingsPage() {
         <button type="button" onClick={load} className="btn-secondary text-xs">
           Refresh
         </button>
+      </div>
+
+      <div className="card-vellum p-5 mb-4">
+        <Section title="Workspace">
+          <p className="text-xs text-ink-muted mb-2">
+            Billing, Google Calendar, and account actions live in your workspace settings.
+          </p>
+          <Link href="/workspace/settings" className="text-sm font-medium text-primary hover:underline">
+            Open workspace settings →
+          </Link>
+        </Section>
+      </div>
+
+      <div className="card-vellum p-5 space-y-4 mb-4">
+        <Section title="Interface">
+          <p className="text-xs text-ink-muted mb-3">
+            <strong>2.0</strong> is the default Contextual Serenity layout (Stitch).{' '}
+            <strong>1.0</strong> restores the original Notebook shell.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(['2', '1'] as UiVersion[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setUiVersion(v)}
+                className={clsx(
+                  'px-4 py-2 rounded-full text-sm font-medium border transition-colors',
+                  uiVersion === v
+                    ? 'bg-primary-container text-on-primary border-primary-container'
+                    : 'bg-surface-container-lowest border-border-serenity text-on-surface-variant hover:bg-surface-container'
+                )}
+              >
+                Version {v}.0 {v === '2' ? '(active)' : '(legacy)'}
+              </button>
+            ))}
+          </div>
+        </Section>
       </div>
 
       <div className="card-vellum p-5 space-y-4 mb-4">
