@@ -8,7 +8,6 @@ import { createSpace, getDefaultSpaceId } from '@/lib/db/spaces'
 import { wrapSupabaseError } from '@/lib/db/errors'
 import { toJson } from '@/lib/db/json'
 import type { Space, WorkItem } from '@/lib/db/schemas'
-import type { WorkItemElementKind } from '@/lib/db/schemas'
 
 /** Five workspace element types from product spec. */
 export type WorkspaceElementType = 'note' | 'reminder' | 'list' | 'checklist' | 'database'
