@@ -7,6 +7,7 @@ import FileApprovalWidget from '@/components/FileApprovalWidget'
 import AppShellV1 from '@/components/v1/AppShell'
 import AppShellV2 from '@/components/v2/AppShell'
 import { useUiVersion } from '@/lib/hooks/useUiVersion'
+import { usesWorkspaceChrome } from '@/lib/workspace/app-route'
 
 function CoreProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -27,6 +28,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname === '/login' ||
     pathname === '/signup' ||
     pathname === '/privacy'
+
+  if (usesWorkspaceChrome(pathname)) {
+    return (
+      <CoreProviders>
+        <div className="theme-mockup min-h-screen bg-canvas-base text-ink-primary">{children}</div>
+      </CoreProviders>
+    )
+  }
 
   if (isMinimalShell) {
     const plainAuth =

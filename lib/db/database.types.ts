@@ -601,6 +601,7 @@ export type Database = {
           id: string
           owner_id: string
           owner_type: string
+          page_kind: string
           updated_at: string
           workspace_id: string
         }
@@ -611,6 +612,7 @@ export type Database = {
           id?: string
           owner_id: string
           owner_type: string
+          page_kind?: string
           updated_at?: string
           workspace_id: string
         }
@@ -621,6 +623,7 @@ export type Database = {
           id?: string
           owner_id?: string
           owner_type?: string
+          page_kind?: string
           updated_at?: string
           workspace_id?: string
         }
@@ -913,6 +916,7 @@ export type Database = {
           created_at: string
           data: Json
           due_date: string | null
+          element_kind: string
           end_at: string | null
           external_id: string | null
           external_provider: string | null
@@ -935,6 +939,7 @@ export type Database = {
           created_at?: string
           data?: Json
           due_date?: string | null
+          element_kind?: string
           end_at?: string | null
           external_id?: string | null
           external_provider?: string | null
@@ -957,6 +962,7 @@ export type Database = {
           created_at?: string
           data?: Json
           due_date?: string | null
+          element_kind?: string
           end_at?: string | null
           external_id?: string | null
           external_provider?: string | null
@@ -982,6 +988,78 @@ export type Database = {
           },
           {
             foreignKeyName: "work_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_list_items: {
+        Row: {
+          list_id: string
+          sort_order: number
+          work_item_id: string
+        }
+        Insert: {
+          list_id: string
+          sort_order?: number
+          work_item_id: string
+        }
+        Update: {
+          list_id?: string
+          sort_order?: number
+          work_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_list_items_work_item_id_fkey"
+            columns: ["work_item_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_lists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          space_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          space_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          space_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_lists_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_lists_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"

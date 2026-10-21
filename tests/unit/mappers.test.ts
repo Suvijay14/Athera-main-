@@ -107,6 +107,7 @@ describe('mappers round trip shape', () => {
       recurrence_id: null,
       recurrence_instance_date: null,
       source: 'manual',
+      element_kind: 'task',
       space_confidence: null,
       external_provider: null,
       external_id: null,

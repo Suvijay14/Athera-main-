@@ -65,7 +65,7 @@ export function WorkspaceShell({
         entities={entities}
         notePages={notePages}
       >
-        <div className={embedded ? 'flex min-h-0 flex-1 flex-col bg-canvas-ambient' : 'flex min-h-screen bg-neutral-50'}>
+        <div className={embedded ? 'flex min-h-0 flex-1 flex-col bg-canvas-base' : 'flex min-h-screen bg-canvas-base'}>
           {!embedded ? (
             <AppSidebar
               spaces={spaces}
@@ -80,7 +80,7 @@ export function WorkspaceShell({
             />
           ) : null}
           <div className={embedded ? 'flex min-h-0 flex-1 flex-col' : 'flex min-w-0 flex-1 flex-col pt-14 md:pt-0'}>
-            {!embedded ? <WorkspaceTopBar spaces={spaces} /> : null}
+            {!embedded ? <WorkspaceTopBar spaces={spaces} userEmail={userEmail} /> : null}
             <div className="min-h-0 flex-1">{children}</div>
           </div>
         </div>

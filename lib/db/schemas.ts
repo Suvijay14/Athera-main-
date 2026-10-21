@@ -27,6 +27,8 @@ export const fieldTypeSchema = z.enum([
 export const fieldSourceSchema = z.enum(['onboarding', 'user', 'athera'])
 export const viewTypeSchema = z.enum(['list', 'grouped', 'board', 'calendar'])
 export const itemSourceSchema = z.enum(['manual', 'import', 'recurrence', 'routine'])
+export const workItemElementKindSchema = z.enum(['task', 'event', 'reminder', 'note'])
+export type WorkItemElementKind = z.infer<typeof workItemElementKindSchema>
 export const calendarRangeSchema = z.enum(['week', 'month'])
 export const suggestionStatusSchema = z.enum([
   'pending',
@@ -131,6 +133,7 @@ export const workItemSchema = z.object({
   recurrenceInstanceDate: isoDateString.nullable(),
   externalProvider: z.string().nullable(),
   externalId: z.string().nullable(),
+  elementKind: workItemElementKindSchema.optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -257,6 +260,7 @@ export const createWorkItemInputSchema = z.object({
   allDay: z.boolean().optional(),
   source: itemSourceSchema.optional(),
   spaceConfidence: z.number().min(0).max(1).nullable().optional(),
+  elementKind: workItemElementKindSchema.optional(),
   /** When set, resolves space via hard rules + classification instead of using spaceId alone. */
   spaceResolution: createWorkItemSpaceResolutionSchema.optional(),
 })

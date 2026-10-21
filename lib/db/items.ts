@@ -118,6 +118,7 @@ export async function createItem(
       all_day: parsed.allDay ?? false,
       source: parsed.source ?? 'manual',
       space_confidence: parsed.spaceConfidence ?? null,
+      element_kind: parsed.elementKind ?? 'task',
     })
     .select('*')
     .single()

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { getDefaultSpaceId, updateSpace } from '@/lib/db/spaces'
 import { updateWorkspace } from '@/lib/db/workspaces'
 import { track } from '@/lib/events'
+import { applyBrainDump } from '@/lib/onboarding/apply-brain-dump'
 import {
   defaultSpaceNameForPersona,
   ONBOARDING_V1_COMPLETE_KEY,
@@ -63,4 +64,44 @@ export async function completeOnboardingPersonaAction(
 
 export async function skipOnboardingToWorkspaceAction(): Promise<void> {
   await completeOnboardingPersonaAction({ skipped: true })
+}
+
+const brainDumpSchema = z.object({
+  text: z.string().trim().min(1, 'Write a few words to continue'),
+})
+
+export type BrainDumpActionState = {
+  error?: string
+}
+
+export async function completeBrainDumpOnboardingAction(
+  _prev: BrainDumpActionState,
+  formData: FormData
+): Promise<BrainDumpActionState> {
+  const parsed = brainDumpSchema.safeParse({ text: formData.get('brainDump') })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
+  const { workspace, user } = await getCurrentWorkspace()
+  const client = await createClient()
+
+  await applyBrainDump(client, workspace.id, user.id, parsed.data.text)
+
+  const answers = {
+    ...workspace.onboardingAnswers,
+    persona: 'personal' as OnboardingPersona,
+    brain_dump_completed: true,
+    [ONBOARDING_V1_COMPLETE_KEY]: true,
+  }
+  await updateWorkspace(client, workspace.id, { onboardingAnswers: answers })
+
+  await track(client, {
+    workspaceId: workspace.id,
+    userId: user.id,
+    name: 'onboarding_completed',
+    props: { skipped: false, brain_dump: true },
+  })
+
+  redirect('/')
 }

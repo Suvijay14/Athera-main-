@@ -6,7 +6,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   return (
     <WorkspaceShell
-      embedded
+      embedded={false}
       workspaceName={data.workspace.name}
       defaultSpaceId={data.defaultSpaceId}
       quietEntityIds={data.quietEntityIds}

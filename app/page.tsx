@@ -14,7 +14,7 @@ export default async function Home() {
 
   return (
     <WorkspaceShell
-      embedded
+      embedded={false}
       workspaceName={shell.workspace.name}
       defaultSpaceId={shell.defaultSpaceId}
       quietEntityIds={shell.quietEntityIds}

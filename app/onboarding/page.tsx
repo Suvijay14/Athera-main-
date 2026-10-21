@@ -3,20 +3,16 @@
 import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
+import { useFormState } from 'react-dom'
 
 import {
+  completeBrainDumpOnboardingAction,
   completeOnboardingPersonaAction,
   skipOnboardingToWorkspaceAction,
+  type BrainDumpActionState,
 } from '@/lib/onboarding/actions'
 import type { OnboardingPersona } from '@/lib/onboarding/persona'
 import { onboardingPersonaSchema } from '@/lib/onboarding/persona'
-
-const OPTIONS: { id: OnboardingPersona; label: string; hint: string }[] = [
-  { id: 'freelance', label: 'Freelance / studio', hint: 'Names your space “Clients”' },
-  { id: 'tutoring', label: 'Tutoring & lessons', hint: 'Names your space “Tutoring”' },
-  { id: 'startup', label: 'Building a startup', hint: 'Names your space “Company”' },
-  { id: 'personal', label: 'Just me', hint: 'Keeps “My space”' },
-]
 
 function personaFromReferral(raw: string | null): OnboardingPersona | null {
   if (!raw) {
@@ -31,6 +27,10 @@ export default function WorkspaceOnboardingPage() {
   const referralPersona = personaFromReferral(searchParams.get('persona'))
   const [pending, startTransition] = useTransition()
   const referralHandled = useRef(false)
+  const [state, formAction] = useFormState<BrainDumpActionState, FormData>(
+    completeBrainDumpOnboardingAction,
+    {}
+  )
 
   useEffect(() => {
     if (!referralPersona || referralHandled.current) {
@@ -50,12 +50,6 @@ export default function WorkspaceOnboardingPage() {
     )
   }
 
-  function choose(persona: OnboardingPersona) {
-    startTransition(() => {
-      void completeOnboardingPersonaAction({ persona })
-    })
-  }
-
   function skip() {
     startTransition(() => {
       void skipOnboardingToWorkspaceAction()
@@ -64,25 +58,38 @@ export default function WorkspaceOnboardingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-16">
-      <h1 className="text-2xl font-semibold text-neutral-900">What will you use Athera for?</h1>
+      <h1 className="text-2xl font-semibold text-neutral-900">What&apos;s on your mind?</h1>
       <p className="mt-2 text-sm text-neutral-600">
-        This only sets your default space name. You can rename it anytime.
+        Dump tasks, plans, and loose thoughts in one place. No structure required — we&apos;ll sort the
+        basics for you.
       </p>
-      <ul className="mt-8 space-y-3">
-        {OPTIONS.map((opt) => (
-          <li key={opt.id}>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => choose(opt.id)}
-              className="w-full rounded-lg border border-neutral-200 bg-white px-4 py-3 text-left hover:border-neutral-400 disabled:opacity-60"
-            >
-              <span className="font-medium text-neutral-900">{opt.label}</span>
-              <span className="mt-0.5 block text-xs text-neutral-500">{opt.hint}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <form action={formAction} className="mt-8 space-y-4">
+        <div>
+          <label htmlFor="brainDump" className="sr-only">
+            Brain dump
+          </label>
+          <textarea
+            id="brainDump"
+            name="brainDump"
+            rows={8}
+            disabled={pending}
+            placeholder="I need to do… and I need to go to… at 3pm"
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+          />
+        </div>
+        {state.error ? (
+          <p className="text-sm text-red-700" role="alert">
+            {state.error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={pending}
+          className="w-full rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+        >
+          {pending ? 'Setting up…' : 'Continue'}
+        </button>
+      </form>
       <button
         type="button"
         disabled={pending}

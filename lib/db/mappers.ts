@@ -140,6 +140,7 @@ export function mapWorkItemRow(row: WorkItemRow): WorkItem {
     recurrenceInstanceDate: row.recurrence_instance_date,
     externalProvider: row.external_provider ?? null,
     externalId: row.external_id ?? null,
+    elementKind: (row.element_kind as WorkItem['elementKind']) ?? 'task',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

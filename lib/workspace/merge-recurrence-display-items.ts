@@ -27,6 +27,7 @@ function instanceToDisplayItem(
     endAt: inst.endAt,
     allDay: inst.allDay,
     source: 'recurrence',
+    elementKind: 'task',
     spaceConfidence: null,
     archivedAt: null,
     completedAt: null,

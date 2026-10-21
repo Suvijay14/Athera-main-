@@ -149,3 +149,19 @@ export function formatOverviewWhen(item: WorkItem): string {
   }
   return format(d, 'EEE · h:mm a')
 }
+
+/** Time-only label for items on Overview “Today” (mockup style). */
+export function formatOverviewTimeToday(item: WorkItem): string {
+  const d = itemScheduleDate(item)
+  if (!d) {
+    return 'All day'
+  }
+  return format(d, 'h:mma').toLowerCase()
+}
+
+export function formatOverviewItemTitle(item: WorkItem, space?: Space): string {
+  if (space?.name) {
+    return `${space.name} · ${item.title}`
+  }
+  return item.title
+}

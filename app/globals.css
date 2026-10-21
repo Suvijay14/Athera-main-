@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;1,400&family=Plus+Jakarta+Sans:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
 @tailwind base;
@@ -23,6 +23,15 @@ body {
 body.ui-v1 {
   background-color: #fbf9f5;
   color: #221f1d;
+}
+
+.theme-mockup {
+  --canvas-base: #faf9f5;
+  font-family: 'Instrument Sans', 'Inter', sans-serif;
+}
+
+.theme-mockup .font-display {
+  font-family: 'Newsreader', Georgia, serif;
 }
 
 .material-symbols-outlined {

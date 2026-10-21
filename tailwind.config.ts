@@ -108,6 +108,7 @@ const config: Config = {
       },
       fontFamily: {
         newsreader: ['Newsreader', 'Georgia', 'serif'],
+        instrument: ['"Instrument Sans"', 'Inter', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         jakarta: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
       },

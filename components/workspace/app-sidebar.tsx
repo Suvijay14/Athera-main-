@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ChevronDown, ChevronRight, Menu, X } from 'lucide-react'
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 
 import {
   archiveSpaceAction,
@@ -15,11 +15,7 @@ import { signOutAction } from '@/lib/auth/actions'
 import type { Entity, Space } from '@/lib/db/schemas'
 import { entityNavInitial, groupEntitiesBySpace } from '@/lib/workspace/compute-quiet-entity-ids'
 import { spaceEntityHref, spaceListHref } from '@/lib/workspace/home-route'
-import {
-  SPACE_COLOR_SWATCHES,
-  SPACE_ICON_OPTIONS,
-  spaceIconComponent,
-} from '@/lib/workspace/space-icons'
+import { SPACE_COLOR_SWATCHES, SPACE_ICON_OPTIONS } from '@/lib/workspace/space-icons'
 import { cn } from '@/lib/utils'
 
 type AppSidebarProps = {
@@ -36,16 +32,16 @@ type AppSidebarProps = {
 
 const navLinkClass = (active: boolean) =>
   cn(
-    'block rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-fixed',
+    'block rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40',
     active
-      ? 'bg-primary-container text-on-primary'
-      : 'text-on-primary-container hover:bg-primary-container/60 hover:text-on-primary'
+      ? 'bg-surface-container text-ink-primary'
+      : 'text-ink-secondary hover:bg-surface-container/70 hover:text-ink-primary'
   )
 
 const subLinkClass = (active: boolean) =>
   cn(
-    'flex min-w-0 items-center gap-2 rounded-md py-1.5 pl-9 pr-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-fixed',
-    active ? 'bg-primary-container/80 text-on-primary' : 'text-on-primary-container/90 hover:bg-primary-container/40'
+    'flex min-w-0 items-center gap-2 rounded-md py-1.5 pl-9 pr-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40',
+    active ? 'bg-surface-container text-ink-primary font-medium' : 'text-ink-muted hover:bg-surface-container/60'
   )
 
 export function AppSidebar({
@@ -54,7 +50,6 @@ export function AppSidebar({
   itemCountsBySpace,
   quietEntityIds,
   defaultSpaceId,
-  userEmail,
   workspaceName,
   mobileOpen,
   onMobileOpenChange,
@@ -71,6 +66,18 @@ export function AppSidebar({
 
   const quietSet = useMemo(() => new Set(quietEntityIds), [quietEntityIds])
   const entitiesBySpace = useMemo(() => groupEntitiesBySpace(entities), [entities])
+
+  useEffect(() => {
+    setExpandedSpaceIds((prev) => {
+      const next = new Set(prev)
+      for (const space of spaces) {
+        if ((entitiesBySpace.get(space.id)?.length ?? 0) > 0) {
+          next.add(space.id)
+        }
+      }
+      return next
+    })
+  }, [spaces, entitiesBySpace])
   const activeSpaces = spaces.filter((s) => !s.archivedAt)
   const archivedSpaces = spaces.filter((s) => s.archivedAt)
   const pasteWeekHref = `${spaceListHref(defaultSpaceId)}?pasteWeek=1`
@@ -116,11 +123,20 @@ export function AppSidebar({
   }
 
   const sidebarInner = (
-    <div className="flex h-full flex-col bg-primary text-on-primary">
-      <div className="border-b border-white/10 px-4 py-4">
-        <p className="text-sm font-semibold text-on-primary">Athera</p>
-        <p className="truncate text-sm font-medium text-on-primary-container">{workspaceName}</p>
-        <p className="mt-0.5 text-xs text-on-primary-container/80">Life, in context</p>
+    <div className="flex h-full flex-col bg-canvas-base text-ink-primary">
+      <div className="border-b border-border-delicate px-4 py-4">
+        <div className="flex items-center gap-2">
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-primary text-sm font-semibold text-white"
+            aria-hidden
+          >
+            A
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink-primary">Athera</p>
+            <p className="truncate text-sm text-ink-muted">{workspaceName}</p>
+          </div>
+        </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Workspace">
         <Link
@@ -130,14 +146,13 @@ export function AppSidebar({
         >
           Overview
         </Link>
-        <p className="px-3 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-on-primary-container/70">
+        <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
           Spaces
         </p>
         <ul className="space-y-0.5">
           {activeSpaces.map((space) => {
             const href = spaceListHref(space.id)
             const spaceActive = pathname === href || pathname.startsWith(`${href}/`)
-            const Icon = spaceIconComponent(space.icon)
             const count = itemCountsBySpace[space.id] ?? 0
             const spaceEntities = entitiesBySpace.get(space.id) ?? []
             const expanded = expandedSpaceIds.has(space.id)
@@ -149,7 +164,7 @@ export function AppSidebar({
                   {hasEntities ? (
                     <button
                       type="button"
-                      className="rounded p-1 text-on-primary-container hover:bg-primary-container/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-fixed"
+                      className="rounded p-1 text-ink-faint hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40"
                       aria-expanded={expanded}
                       aria-label={expanded ? `Collapse ${space.name}` : `Expand ${space.name}`}
                       onClick={() => toggleSpaceExpanded(space.id)}
@@ -163,20 +178,19 @@ export function AppSidebar({
                     href={href}
                     onClick={closeMobile}
                     className={cn(
-                      'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-fixed',
+                      'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40',
                       spaceActive
-                        ? 'bg-primary-container font-medium text-on-primary'
-                        : 'text-on-primary-container hover:bg-primary-container/60 hover:text-on-primary'
+                        ? 'bg-surface-container font-medium text-ink-primary'
+                        : 'text-ink-secondary hover:bg-surface-container/70'
                     )}
                   >
                     <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10"
-                      style={{ color: space.color ?? '#90b9a2' }}
-                    >
-                      <Icon size={16} aria-hidden />
-                    </span>
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: space.color ?? '#6366f1' }}
+                      aria-hidden
+                    />
                     <span className="min-w-0 flex-1 truncate">{space.name}</span>
-                    <span className="text-xs tabular-nums text-on-primary-container/80">{count}</span>
+                    <span className="text-xs tabular-nums text-ink-faint">{count}</span>
                   </Link>
                 </div>
                 {hasEntities && expanded ? (
@@ -189,15 +203,15 @@ export function AppSidebar({
                         <li key={entity.id}>
                           <Link href={entityHref} onClick={closeMobile} className={subLinkClass(entityActive)}>
                             <span
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-on-primary"
-                              style={{ backgroundColor: entity.color ?? '#244a38' }}
+                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                              style={{ backgroundColor: entity.color ?? '#5c6f84' }}
                               aria-hidden
                             >
                               {initial}
                             </span>
                             <span className="min-w-0 flex-1 truncate">{entity.name}</span>
                             {quietSet.has(entity.id) ? (
-                              <span className="shrink-0 text-[11px] text-on-primary-container/70">Quiet</span>
+                              <span className="shrink-0 text-[11px] text-ink-faint">quiet</span>
                             ) : null}
                           </Link>
                         </li>
@@ -210,9 +224,9 @@ export function AppSidebar({
           })}
         </ul>
         {adding ? (
-          <div className="mt-2 space-y-2 rounded-lg border border-white/15 bg-primary-container/30 p-3">
+          <div className="mt-2 space-y-2 rounded-lg border border-border-delicate bg-surface-paper p-3">
             <input
-              className="w-full rounded-md border border-white/20 bg-primary px-2 py-1.5 text-sm text-on-primary placeholder:text-on-primary-container/60"
+              className="w-full rounded-md border border-border-delicate bg-white px-2 py-1.5 text-sm text-ink-primary placeholder:text-ink-faint"
               placeholder="Space name"
               value={newName}
               autoFocus
@@ -230,8 +244,8 @@ export function AppSidebar({
                   type="button"
                   title={label}
                   className={cn(
-                    'rounded p-1.5 text-on-primary-container',
-                    newIcon === id ? 'bg-white/15 ring-1 ring-white/40' : 'hover:bg-white/10'
+                    'rounded p-1.5 text-ink-muted',
+                    newIcon === id ? 'bg-surface-container ring-1 ring-border-subtle' : 'hover:bg-surface-container/80'
                   )}
                   onClick={() => setNewIcon(id)}
                 >
@@ -246,7 +260,7 @@ export function AppSidebar({
                   type="button"
                   className={cn(
                     'h-6 w-6 rounded-full border border-white/20',
-                    newColor === c && 'ring-2 ring-offset-1 ring-offset-primary ring-white/50'
+                    newColor === c && 'ring-2 ring-offset-1 ring-offset-canvas-base ring-ink-primary/30'
                   )}
                   style={{ backgroundColor: c }}
                   onClick={() => setNewColor(c)}
@@ -258,14 +272,14 @@ export function AppSidebar({
               <button
                 type="button"
                 disabled={pending}
-                className="rounded-md bg-primary-container px-2 py-1 text-xs font-medium text-on-primary"
+                className="rounded-md bg-ink-primary px-2 py-1 text-xs font-medium text-white"
                 onClick={submitNewSpace}
               >
                 Create
               </button>
               <button
                 type="button"
-                className="rounded-md px-2 py-1 text-xs text-on-primary-container"
+                className="rounded-md px-2 py-1 text-xs text-ink-muted"
                 onClick={() => setAdding(false)}
               >
                 Cancel
@@ -275,15 +289,15 @@ export function AppSidebar({
         ) : (
           <button
             type="button"
-            className="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm text-on-primary-container hover:bg-primary-container/40"
+            className="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm text-ink-muted hover:bg-surface-container/70"
             onClick={() => setAdding(true)}
           >
-            + Add a space
+            Add a space
           </button>
         )}
         <button
           type="button"
-          className="mt-3 w-full px-3 text-left text-xs text-on-primary-container/70 hover:text-on-primary-container"
+          className="mt-3 w-full px-3 text-left text-xs text-ink-faint hover:text-ink-muted"
           onClick={() => setShowArchived((v) => !v)}
         >
           {showArchived ? 'Hide archived spaces' : 'Show archived spaces'}
@@ -293,12 +307,12 @@ export function AppSidebar({
             {archivedSpaces.map((space) => (
               <li
                 key={space.id}
-                className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-on-primary-container/70"
+                className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-ink-faint"
               >
                 <span className="truncate">{space.name}</span>
                 <button
                   type="button"
-                  className="text-xs text-primary-fixed hover:underline"
+                  className="text-xs text-terracotta hover:underline"
                   onClick={() => {
                     startTransition(async () => {
                       await unarchiveSpaceAction({ spaceId: space.id })
@@ -313,7 +327,7 @@ export function AppSidebar({
           </ul>
         ) : null}
 
-        <div className="my-3 border-t border-white/10" role="presentation" />
+        <div className="my-3 border-t border-border-delicate" role="presentation" />
 
         <Link href="/workspace/changes" onClick={closeMobile} className={navLinkClass(pathname === '/workspace/changes')}>
           Change history
@@ -325,40 +339,52 @@ export function AppSidebar({
         >
           Paste your week
         </Link>
-
-        <div className="my-3 border-t border-white/10" role="presentation" />
-
-        <Link
-          href="/components"
-          onClick={closeMobile}
-          className={navLinkClass(pathname === '/components' || pathname.startsWith('/components/'))}
+        <button
+          type="button"
+          disabled
+          title="Interactive tour coming soon"
+          className="mt-1 block w-full cursor-not-allowed rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-faint opacity-70"
         >
-          <span className="block">Components</span>
-          <span className="block text-xs font-normal text-on-primary-container/80">Lab &amp; approvals</span>
-        </Link>
+          Play the demo
+        </button>
+
+        <div
+          className="mx-2 mt-4 rounded-lg border border-border-delicate bg-surface-paper/80 p-3"
+          aria-label="Coming soon"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">Coming soon</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Today brief · Meeting prep · Weekly recap
+          </p>
+        </div>
+
+        {process.env.NODE_ENV === 'development' ? (
+          <>
+            <div className="my-3 border-t border-border-delicate" role="presentation" />
+            <Link
+              href="/components"
+              onClick={closeMobile}
+              className={navLinkClass(pathname === '/components' || pathname.startsWith('/components/'))}
+            >
+              Components lab
+            </Link>
+          </>
+        ) : null}
       </nav>
-      <div className="space-y-1 border-t border-white/10 px-3 py-3">
-        <Link
-          href="/workspace/admin/metrics"
-          onClick={closeMobile}
-          className="block rounded-lg px-2 py-2 text-sm text-on-primary-container hover:bg-primary-container/40"
-        >
-          Metrics
-        </Link>
-        <Link
-          href="/workspace/settings"
-          onClick={closeMobile}
-          className="block rounded-lg px-2 py-2 text-sm text-on-primary-container hover:bg-primary-container/40"
-        >
-          Account &amp; billing
-        </Link>
-        {userEmail ? (
-          <p className="truncate px-2 text-xs text-on-primary-container/60">{userEmail}</p>
+      <div className="space-y-1 border-t border-border-delicate px-3 py-3">
+        {process.env.NODE_ENV === 'development' ? (
+          <Link
+            href="/workspace/admin/metrics"
+            onClick={closeMobile}
+            className="block rounded-lg px-2 py-2 text-sm text-ink-muted hover:bg-surface-container/70"
+          >
+            Metrics
+          </Link>
         ) : null}
         <form action={signOutAction}>
           <button
             type="submit"
-            className="w-full rounded-lg px-2 py-2 text-left text-sm text-on-primary-container hover:bg-primary-container/40"
+            className="w-full rounded-lg px-2 py-2 text-left text-sm text-ink-muted hover:bg-surface-container/70"
           >
             Log out
           </button>
@@ -371,7 +397,7 @@ export function AppSidebar({
     <>
       <button
         type="button"
-        className="fixed left-3 top-3 z-30 rounded-lg border border-primary-container bg-primary p-2 text-on-primary md:hidden"
+        className="fixed left-3 top-3 z-30 rounded-lg border border-border-delicate bg-surface-paper p-2 text-ink-primary shadow-card md:hidden"
         aria-label="Open menu"
         onClick={() => onMobileOpenChange(true)}
       >
@@ -387,14 +413,14 @@ export function AppSidebar({
       ) : null}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-[260px] border-r border-primary-container transition-transform md:static md:translate-x-0 md:shrink-0',
+          'fixed inset-y-0 left-0 z-50 w-[260px] border-r border-border-delicate bg-canvas-base transition-transform md:static md:translate-x-0 md:shrink-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
         <div className="flex items-center justify-end p-2 md:hidden">
           <button
             type="button"
-            className="text-on-primary-container"
+            className="text-ink-muted"
             aria-label="Close sidebar"
             onClick={() => onMobileOpenChange(false)}
           >
