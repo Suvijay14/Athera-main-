@@ -1,11 +1,13 @@
+import { scaleLandingDemoMs } from '@/lib/landing/constants'
+
 export const TODO_TAB_TIMING = {
-  initialHold: 1500,
-  addCursorMs: 450,
-  typeMs: 2000,
-  afterAddMs: 350,
-  dragMs: 2200,
-  checkMs: 2000,
-  finalHold: 2500,
+  initialHold: scaleLandingDemoMs(1500),
+  addCursorMs: scaleLandingDemoMs(450),
+  typeMs: scaleLandingDemoMs(2000),
+  afterAddMs: scaleLandingDemoMs(350),
+  dragMs: scaleLandingDemoMs(2200),
+  checkMs: scaleLandingDemoMs(2000),
+  finalHold: scaleLandingDemoMs(2500),
 } as const
 
 export const TODO_NEW_TASK_ID = 'todo-new-task'

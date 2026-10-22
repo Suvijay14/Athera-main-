@@ -5,6 +5,7 @@ import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion } fro
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import clsx from 'clsx'
 import { trackLandingEvent } from '@/lib/landing/analytics'
+import { scaleLandingDemoSec } from '@/lib/landing/constants'
 import { heroStoryPack, WEEKDAY_LABELS, type HeroStoryItem, type PersonaKey } from '@/demo-data'
 import {
   ATHERA_CALENDAR_SUGGESTION,
@@ -104,8 +105,8 @@ function CrossfadeMain({
   instant?: boolean
   children: React.ReactNode
 }) {
-  const enterMs = instant ? 0 : calendarEnter ? 0.25 : 0.2
-  const exitMs = instant ? 0 : 0.2
+  const enterMs = instant ? 0 : calendarEnter ? scaleLandingDemoSec(0.25) : scaleLandingDemoSec(0.2)
+  const exitMs = instant ? 0 : scaleLandingDemoSec(0.2)
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
@@ -236,7 +237,7 @@ function HeroCursor({
       <motion.div
         className="relative origin-top-left"
         animate={phase === 'click' ? { scale: [1, 0.85, 1] } : { scale: 1 }}
-        transition={{ duration: 0.22 }}
+        transition={{ duration: scaleLandingDemoSec(0.22) }}
       >
         <PointerCursorSvg />
       </motion.div>
@@ -467,7 +468,7 @@ function TaskRow({
         key={showClean ? 'clean' : 'messy'}
         initial={{ opacity: 0.4 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.18 }}
+        transition={{ duration: scaleLandingDemoSec(0.18) }}
         className="truncate flex-1 min-w-0 text-ink-primary"
       >
         {title}
@@ -641,7 +642,7 @@ export function HeroStoryShell({
       className="relative flex h-full min-h-0 overflow-hidden"
       initial={{ opacity: instantMotion ? 1 : 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: instantMotion ? 0 : 0.25 }}
+      transition={{ duration: instantMotion ? 0 : scaleLandingDemoSec(0.25) }}
     >
       <AnimatePresence initial={false}>
         {flags.sidebarVisible ? (
@@ -837,7 +838,7 @@ export function HeroStoryShell({
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: instantMotion ? 0 : 0.32, ease: 'easeOut' }}
+            transition={{ duration: instantMotion ? 0 : scaleLandingDemoSec(0.32), ease: 'easeOut' }}
             className="absolute left-4 right-4 bottom-4 z-30 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]"
             data-persona-conflict-zone
           >
@@ -854,7 +855,7 @@ export function HeroStoryShell({
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: instantMotion ? 0 : 0.32, ease: 'easeOut' }}
+            transition={{ duration: instantMotion ? 0 : scaleLandingDemoSec(0.32), ease: 'easeOut' }}
             className="absolute left-4 right-4 bottom-4 z-30 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]"
             data-persona-conflict-zone
           >
@@ -1011,7 +1012,7 @@ export default function HeroProductDemo() {
       <div
         ref={mockRef}
         className={clsx(
-          'demo-frame w-full overflow-hidden relative p-4 transition-[height] duration-300',
+          'demo-frame w-full overflow-hidden relative p-4 transition-[height] duration-150',
           compactStep1Card ? 'h-[392px] min-[900px]:h-[432px]' : 'h-[440px] min-[900px]:h-[500px]'
         )}
         onMouseEnter={handleCardEnter}
@@ -1060,7 +1061,7 @@ export default function HeroProductDemo() {
             initial={{ opacity: instantMotion ? 1 : 0, y: instantMotion ? 0 : 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: instantMotion ? 1 : 0, y: instantMotion ? 0 : -4 }}
-            transition={{ duration: instantMotion ? 0 : 0.25 }}
+            transition={{ duration: instantMotion ? 0 : scaleLandingDemoSec(0.25) }}
             className="text-center text-[15px] sm:text-[16px] text-ink-secondary leading-snug px-2 min-h-[2.5rem]"
           >
             {caption}

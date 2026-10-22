@@ -760,6 +760,7 @@ export type Database = {
           id: string
           is_default: boolean
           name: string
+          parent_space_id: string | null
           sort_order: number
           updated_at: string
           workspace_id: string
@@ -772,6 +773,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           name: string
+          parent_space_id?: string | null
           sort_order?: number
           updated_at?: string
           workspace_id: string
@@ -784,11 +786,19 @@ export type Database = {
           id?: string
           is_default?: boolean
           name?: string
+          parent_space_id?: string | null
           sort_order?: number
           updated_at?: string
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "spaces_parent_space_id_fkey"
+            columns: ["parent_space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "spaces_workspace_id_fkey"
             columns: ["workspace_id"]

@@ -4,7 +4,7 @@ import { countActiveAdaptations, listChangeLog } from '@/lib/db/change-log'
 import { countItemsBySpace, listItems } from '@/lib/db/items'
 import { listRecurrenceRules } from '@/lib/db/recurrence-rules'
 import { listFields } from '@/lib/db/fields'
-import { listEntities, listEntitiesForWorkspace } from '@/lib/db/entities'
+import { listEntitiesForWorkspace } from '@/lib/db/entities'
 import { getSpaceById, listSpaces } from '@/lib/db/spaces'
 import { getPendingSuggestion } from '@/lib/db/suggestions'
 import { listViews } from '@/lib/db/views'
@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentWorkspace } from '@/lib/supabase/get-current-workspace'
 import { mergeWorkItemsWithRecurrenceInstances } from '@/lib/workspace/merge-recurrence-display-items'
 import { computeQuietEntityIds } from '@/lib/workspace/compute-quiet-entity-ids'
+import { rollupItemCountsBySpace, spaceTreeIds, buildChildSpacesByParentId } from '@/lib/workspace/space-hierarchy'
 
 async function loadWorkspaceCore(client: Awaited<ReturnType<typeof createClient>>, workspaceId: string) {
   const [fields, views, spacesInitial, pendingSuggestion, activeAdaptationCount, changeLog, itemCounts] =
@@ -48,7 +49,7 @@ async function loadWorkspaceCore(client: Awaited<ReturnType<typeof createClient>
     pendingSuggestion,
     activeAdaptationCount,
     activeChanges,
-    itemCountsBySpace: itemCounts,
+    itemCountsBySpace: rollupItemCountsBySpace(itemCounts, spaces),
   }
 }
 
@@ -108,9 +109,12 @@ export async function loadSpacePageData(spaceId: string) {
   if (!space || space.archivedAt) {
     return null
   }
-  const [itemsResult, entities, recurrenceRules, calendarConnection] = await Promise.all([
-    listItems(client, ctx.workspace.id, { spaceId: space.id, limit: 500 }),
-    listEntities(client, ctx.workspace.id, space.id),
+  const childByParent = buildChildSpacesByParentId(core.spaces)
+  const treeSpaceIds = spaceTreeIds(space.id, childByParent)
+  const loadSpaceIds = treeSpaceIds.length > 1 ? treeSpaceIds : [space.id]
+  const [itemsResult, entitiesAll, recurrenceRules, calendarConnection] = await Promise.all([
+    listItems(client, ctx.workspace.id, { spaceIds: loadSpaceIds, limit: 500 }),
+    listEntitiesForWorkspace(client, ctx.workspace.id),
     listRecurrenceRules(client, ctx.workspace.id),
     (async () => {
       try {
@@ -121,8 +125,12 @@ export async function loadSpacePageData(spaceId: string) {
       }
     })(),
   ])
+  const entities = entitiesAll.filter((e) => loadSpaceIds.includes(e.spaceId))
+  const childSpaces = childByParent.get(space.id) ?? []
   const now = new Date()
-  const spaceRules = recurrenceRules.filter((r) => r.spaceId === space.id && r.active)
+  const spaceRules = recurrenceRules.filter(
+    (r) => loadSpaceIds.includes(r.spaceId) && r.active
+  )
   const displayItems = mergeWorkItemsWithRecurrenceInstances(
     ctx.workspace.id,
     itemsResult.items,
@@ -139,6 +147,7 @@ export async function loadSpacePageData(spaceId: string) {
     recurrenceRules: spaceRules,
     items: displayItems,
     calendarConnection,
+    childSpaces,
   }
 }
 

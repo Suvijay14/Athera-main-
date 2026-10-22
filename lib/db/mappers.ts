@@ -75,6 +75,7 @@ export function mapSpaceRow(row: SpaceRow): Space {
   return {
     id: row.id,
     workspaceId: row.workspace_id,
+    parentSpaceId: row.parent_space_id ?? null,
     name: row.name,
     icon: row.icon,
     color: row.color,

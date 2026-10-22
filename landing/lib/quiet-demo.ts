@@ -1,9 +1,11 @@
+import { scaleLandingDemoMs } from '@/lib/landing/constants'
+
 export const QUIET_DEMO_TIMING = {
-  initialHold: 2000,
-  suggestionHold: 4500,
-  cursorGlide: 650,
-  clickDuration: 220,
-  resultHold: 3000,
+  initialHold: scaleLandingDemoMs(2000),
+  suggestionHold: scaleLandingDemoMs(4500),
+  cursorGlide: scaleLandingDemoMs(650),
+  clickDuration: scaleLandingDemoMs(220),
+  resultHold: scaleLandingDemoMs(3000),
 } as const
 
 export type QuietDemoVariant = 'remind' | 'archive'

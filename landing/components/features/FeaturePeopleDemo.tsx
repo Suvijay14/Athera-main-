@@ -6,6 +6,7 @@ import { entityNotesForPersona, entityProfileForPersona } from '@/demo-data'
 import { useLandingPersona } from '@/components/landing/LandingPersonaContext'
 import { useFeatureDemoSteps } from '@/lib/landing/useFeatureDemoSteps'
 import FeatureDemoShell from '@/components/landing/features/FeatureDemoShell'
+import { LANDING_FEATURE_STEP_MS } from '@/lib/landing/constants'
 import { EntityPage, NotesPage } from '@/src/components/athera-ui'
 
 const CAPTIONS = [
@@ -25,7 +26,7 @@ export default function FeaturePeopleDemo() {
   const playback = useFeatureDemoSteps({
     resetKey: `feature-people-${persona}`,
     stepCount: 3,
-    stepDurationMs: 5200,
+    stepDurationMs: LANDING_FEATURE_STEP_MS,
     inView,
     reducedMotion: !!reducedMotion,
     analyticsPrefix: 'people',

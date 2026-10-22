@@ -9,6 +9,7 @@ import {
   type PersonaKey,
 } from '@/demo-data'
 import { ATHERA_COMMAND_PLACEHOLDER } from '@/src/components/athera-ui'
+import { scaleLandingDemoMs } from '@/lib/landing/constants'
 import { todoTabDurationMs } from '@/lib/landing/todo-tab-demo'
 
 export type ComparisonTask = {
@@ -86,22 +87,22 @@ export const ATHERA_CALENDAR_SUGGESTION =
 export const COMMAND_BAR_PLACEHOLDER = ATHERA_COMMAND_PLACEHOLDER
 
 export const ATHERA_QUIET_TIMING = {
-  weeksLaterHold: 700,
-  quietSuggestHold: 3500,
-  cursorGlide: 650,
-  clickDuration: 220,
-  draftHold: 2800,
-  afterQuietHold: 900,
+  weeksLaterHold: scaleLandingDemoMs(700),
+  quietSuggestHold: scaleLandingDemoMs(3500),
+  cursorGlide: scaleLandingDemoMs(650),
+  clickDuration: scaleLandingDemoMs(220),
+  draftHold: scaleLandingDemoMs(2800),
+  afterQuietHold: scaleLandingDemoMs(900),
 } as const
 
 export const ATHERA_VIEW_TIMING = {
-  messyHold: 2000,
-  suggestHold: 4000,
-  cursorGlide: 650,
-  clickDuration: 220,
-  afterGroupHold: 1200,
-  calendarSuggestHold: 3500,
-  calendarHold: 3000,
+  messyHold: scaleLandingDemoMs(2000),
+  suggestHold: scaleLandingDemoMs(4000),
+  cursorGlide: scaleLandingDemoMs(650),
+  clickDuration: scaleLandingDemoMs(220),
+  afterGroupHold: scaleLandingDemoMs(1200),
+  calendarSuggestHold: scaleLandingDemoMs(3500),
+  calendarHold: scaleLandingDemoMs(3000),
 } as const
 
 export function atheraQuietPhaseEndMs(): number {
@@ -232,7 +233,7 @@ export function atheraComparisonFlagsFromElapsed(
 
 export const COMPARISON_TAB_DURATION_MS = {
   todo: todoTabDurationMs(),
-  chat: 14_000,
+  chat: scaleLandingDemoMs(14_000),
   athera: atheraComparisonDurationMs(),
 } as const
 

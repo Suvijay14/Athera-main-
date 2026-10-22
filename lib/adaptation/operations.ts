@@ -65,6 +65,10 @@ export function describe(op: Operation): string {
       return 'Remove a draft message'
     case 'create_space':
       return `Create space “${op.space.name}”`
+    case 'update_space':
+      return op.patch.name
+        ? `Rename space to “${op.patch.name}”`
+        : 'Update a space'
     case 'delete_space':
       return 'Remove a space created by Athera'
     case 'move_work_item_space':

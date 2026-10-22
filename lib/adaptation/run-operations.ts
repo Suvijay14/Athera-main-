@@ -769,11 +769,12 @@ export async function executeOperation(
         const spaceId = op.space.preserveSpaceId ?? randomUUID()
         await tx.query(
           `insert into public.spaces
-            (id, workspace_id, name, icon, color, sort_order, is_default)
-           values ($1, $2, $3, $4, $5, $6, false)`,
+            (id, workspace_id, parent_space_id, name, icon, color, sort_order, is_default)
+           values ($1, $2, $3, $4, $5, $6, $7, false)`,
           [
             spaceId,
             workspaceId,
+            op.space.parentSpaceId ?? null,
             op.space.name,
             op.space.icon ?? null,
             op.space.color ?? null,
@@ -783,9 +784,49 @@ export async function executeOperation(
         return [{ op: 'delete_space', spaceId }]
       }
 
+      case 'update_space': {
+        const row = await tx.query(
+          `select name, parent_space_id from public.spaces
+           where workspace_id = $1 and id = $2`,
+          [workspaceId, op.spaceId]
+        )
+        if (row.rowCount === 0) {
+          throw new OperationError(op, `Space "${op.spaceId}" not found`)
+        }
+        const prev = row.rows[0] as { name: string; parent_space_id: string | null }
+        const patch: string[] = []
+        const values: unknown[] = [workspaceId, op.spaceId]
+        let idx = 3
+        if (op.patch.name !== undefined) {
+          patch.push(`name = $${idx}`)
+          values.push(op.patch.name)
+          idx += 1
+        }
+        if (op.patch.parentSpaceId !== undefined) {
+          patch.push(`parent_space_id = $${idx}`)
+          values.push(op.patch.parentSpaceId)
+          idx += 1
+        }
+        if (patch.length === 0) {
+          throw new ValidationError('update_space requires at least one patch field')
+        }
+        await tx.query(
+          `update public.spaces set ${patch.join(', ')} where workspace_id = $1 and id = $2`,
+          values
+        )
+        const inversePatch: { name?: string; parentSpaceId?: string | null } = {}
+        if (op.patch.name !== undefined) {
+          inversePatch.name = prev.name
+        }
+        if (op.patch.parentSpaceId !== undefined) {
+          inversePatch.parentSpaceId = prev.parent_space_id
+        }
+        return [{ op: 'update_space', spaceId: op.spaceId, patch: inversePatch }]
+      }
+
       case 'delete_space': {
         const row = await tx.query(
-          `select name, icon, color, sort_order from public.spaces
+          `select name, icon, color, sort_order, parent_space_id from public.spaces
            where workspace_id = $1 and id = $2 and is_default = false`,
           [workspaceId, op.spaceId]
         )
@@ -812,6 +853,7 @@ export async function executeOperation(
           icon: string | null
           color: string | null
           sort_order: number
+          parent_space_id: string | null
         }
         return [
           {
@@ -821,6 +863,7 @@ export async function executeOperation(
               icon: s.icon,
               color: s.color,
               sortOrder: s.sort_order,
+              parentSpaceId: s.parent_space_id,
               preserveSpaceId: op.spaceId,
             },
           },

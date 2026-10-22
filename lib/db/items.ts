@@ -21,6 +21,8 @@ export type ListItemsOptions = {
   limit?: number
   cursor?: ListItemsCursor | null
   spaceId?: string
+  /** When set, includes items in any of these spaces (mutually exclusive with spaceId). */
+  spaceIds?: string[]
 }
 
 export type ListItemsResult = {
@@ -46,7 +48,9 @@ export async function listItems(
     .select('*')
     .eq('workspace_id', workspaceId)
 
-  if (options.spaceId) {
+  if (options.spaceIds && options.spaceIds.length > 0) {
+    query = query.in('space_id', options.spaceIds)
+  } else if (options.spaceId) {
     query = query.eq('space_id', options.spaceId)
   }
 

@@ -12,6 +12,7 @@ import {
   insertPendingSuggestion,
   listRecentSuggestionsForDetection,
 } from '@/lib/db/suggestions'
+import { listSpaces } from '@/lib/db/spaces'
 import { listViews } from '@/lib/db/views'
 import type { Suggestion } from '@/lib/db/schemas'
 
@@ -26,10 +27,11 @@ export async function runAdaptation(
   const now = new Date()
 
   const since = subDays(now, 21).toISOString()
-  const [fields, itemsResult, views, recurrenceRules, recentSuggestions, itemExtractions, workspaceRow] =
+  const [fields, itemsResult, spaces, views, recurrenceRules, recentSuggestions, itemExtractions, workspaceRow] =
     await Promise.all([
       listFields(client, workspaceId),
       listItems(client, workspaceId, { limit: 500 }),
+      listSpaces(client, workspaceId),
       listViews(client, workspaceId),
       listRecurrenceRules(client, workspaceId),
       listRecentSuggestionsForDetection(client, workspaceId, now),
@@ -45,6 +47,7 @@ export async function runAdaptation(
     workspaceCreatedAt,
     isFirstWeek,
     items: itemsResult.items,
+    spaces,
     fields,
     views,
     recurrenceRules,

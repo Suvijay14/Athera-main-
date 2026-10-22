@@ -2,6 +2,7 @@ import type { StoredItemExtraction } from '@/lib/db/item-entity-extractions'
 import type {
   FieldDefinition,
   RecurrenceRule,
+  Space,
   Suggestion,
   ViewDefinition,
   WorkItem,
@@ -15,6 +16,7 @@ export type DetectionContext = {
   /** True when workspace is younger than 7 days — lowers entity + calendar thresholds only. */
   isFirstWeek: boolean
   items: WorkItem[]
+  spaces: Space[]
   fields: FieldDefinition[]
   views: ViewDefinition[]
   recurrenceRules: RecurrenceRule[]

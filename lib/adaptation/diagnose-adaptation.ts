@@ -140,10 +140,12 @@ export async function buildDetectionContext(
   now = new Date()
 ): Promise<DetectionContext> {
   const since = subDays(now, 21).toISOString()
-  const [fields, itemsResult, views, recurrenceRules, recentSuggestions, itemExtractions, workspaceRow] =
+  const { listSpaces } = await import('@/lib/db/spaces')
+  const [fields, itemsResult, spaces, views, recurrenceRules, recentSuggestions, itemExtractions, workspaceRow] =
     await Promise.all([
       listFields(client, workspaceId),
       listItems(client, workspaceId, { limit: 500 }),
+      listSpaces(client, workspaceId),
       listViews(client, workspaceId),
       listRecurrenceRules(client, workspaceId),
       listRecentSuggestionsForDetection(client, workspaceId, now),
@@ -158,6 +160,7 @@ export async function buildDetectionContext(
     workspaceCreatedAt,
     isFirstWeek: isWorkspaceInFirstWeek(workspaceCreatedAt, now),
     items: itemsResult.items,
+    spaces,
     fields,
     views,
     recurrenceRules,

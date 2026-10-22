@@ -2,7 +2,8 @@
 
 import { Briefcase, FileText, Phone, Repeat2 } from 'lucide-react'
 import { useWorkspaceUi } from '@/components/workspace/workspace-ui-context'
-import type { Entity, FieldDefinition, Space } from '@/lib/db/schemas'
+import type { Entity, FieldDefinition, Space, WorkItem } from '@/lib/db/schemas'
+import { spaceNavInitial } from '@/lib/workspace/space-hierarchy'
 import type { DisplayWorkItem } from '@/lib/workspace/merge-recurrence-display-items'
 import { inferTaskRowIconKind } from '@/lib/workspace/infer-task-row-icon'
 import {
@@ -15,6 +16,8 @@ type SpaceTaskListProps = {
   fields: FieldDefinition[]
   entities: Entity[]
   space: Space
+  /** When set, items are shown in sections per child space (parent space list). */
+  childSpaces?: Space[]
   itemLabel: string
   loading?: boolean
 }

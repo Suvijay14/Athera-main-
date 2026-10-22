@@ -8,6 +8,7 @@ import { useFeatureDemoSteps } from '@/lib/landing/useFeatureDemoSteps'
 import FeatureDemoShell from '@/components/landing/features/FeatureDemoShell'
 import { HeroStoryShell } from '@/components/landing/HeroProductDemo'
 import { LANDING_FEATURE_COPY } from '@/demo-data'
+import { LANDING_FEATURE_STEP_MS } from '@/lib/landing/constants'
 
 const CAPTION_PREFIX = [
   'One mixed list',
@@ -31,7 +32,7 @@ export default function FeatureSpacesDemo() {
   const playback = useFeatureDemoSteps({
     resetKey: `feature-spaces-${persona}`,
     stepCount: 4,
-    stepDurationMs: 5500,
+    stepDurationMs: LANDING_FEATURE_STEP_MS,
     inView,
     reducedMotion: !!reducedMotion,
     analyticsPrefix: 'spaces',

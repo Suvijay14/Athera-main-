@@ -6,6 +6,7 @@ import { quietDraftEmailBody, quietEntitySuggestion } from '@/demo-data'
 import { useLandingPersona } from '@/components/landing/LandingPersonaContext'
 import { useFeatureDemoSteps } from '@/lib/landing/useFeatureDemoSteps'
 import FeatureDemoShell from '@/components/landing/features/FeatureDemoShell'
+import { LANDING_FEATURE_STEP_MS } from '@/lib/landing/constants'
 import { DraftCard, SuggestionCard } from '@/src/components/athera-ui'
 
 const CAPTIONS = [
@@ -24,7 +25,7 @@ export default function FeatureQuietDemo() {
   const playback = useFeatureDemoSteps({
     resetKey: `feature-quiet-${persona}`,
     stepCount: 2,
-    stepDurationMs: 6000,
+    stepDurationMs: LANDING_FEATURE_STEP_MS,
     inView,
     reducedMotion: !!reducedMotion,
     analyticsPrefix: 'quiet',

@@ -80,6 +80,7 @@ export function baseContext(overrides: Partial<DetectionContext> = {}): Detectio
     workspaceCreatedAt: '2026-01-01T00:00:00.000Z',
     isFirstWeek: false,
     items: [],
+    spaces: [],
     fields: [],
     views: [] as ViewDefinition[],
     recurrenceRules: [] as RecurrenceRule[],

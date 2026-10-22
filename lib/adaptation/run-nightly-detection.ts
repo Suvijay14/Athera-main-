@@ -124,6 +124,7 @@ export async function runNightlyDetectionForWorkspace(
     workspaceCreatedAt,
     isFirstWeek,
     items,
+    spaces,
     fields,
     views,
     recurrenceRules,

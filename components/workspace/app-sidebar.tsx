@@ -14,6 +14,11 @@ import {
 import { signOutAction } from '@/lib/auth/actions'
 import type { Entity, Space } from '@/lib/db/schemas'
 import { entityNavInitial, groupEntitiesBySpace } from '@/lib/workspace/compute-quiet-entity-ids'
+import {
+  buildChildSpacesByParentId,
+  spaceNavInitial,
+  topLevelSpaces,
+} from '@/lib/workspace/space-hierarchy'
 import { spaceEntityHref, spaceListHref } from '@/lib/workspace/home-route'
 import { SPACE_COLOR_SWATCHES, SPACE_ICON_OPTIONS } from '@/lib/workspace/space-icons'
 import { cn } from '@/lib/utils'
@@ -64,19 +69,23 @@ export function AppSidebar({
 
   const quietSet = useMemo(() => new Set(quietEntityIds), [quietEntityIds])
   const entitiesBySpace = useMemo(() => groupEntitiesBySpace(entities), [entities])
+  const childSpacesByParent = useMemo(() => buildChildSpacesByParentId(spaces), [spaces])
 
   useEffect(() => {
     setExpandedSpaceIds((prev) => {
       const next = new Set(prev)
-      for (const space of spaces) {
-        if ((entitiesBySpace.get(space.id)?.length ?? 0) > 0) {
+      for (const space of topLevelSpaces(spaces)) {
+        const hasChildren =
+          (childSpacesByParent.get(space.id)?.length ?? 0) > 0 ||
+          (entitiesBySpace.get(space.id)?.length ?? 0) > 0
+        if (hasChildren) {
           next.add(space.id)
         }
       }
       return next
     })
-  }, [spaces, entitiesBySpace])
-  const activeSpaces = spaces.filter((s) => !s.archivedAt)
+  }, [spaces, entitiesBySpace, childSpacesByParent])
+  const activeSpaces = topLevelSpaces(spaces)
   const archivedSpaces = spaces.filter((s) => s.archivedAt)
   const pasteWeekHref = '/workspace/paste-week'
 
@@ -152,14 +161,15 @@ export function AppSidebar({
             const href = spaceListHref(space.id)
             const spaceActive = pathname === href || pathname.startsWith(`${href}/`)
             const count = itemCountsBySpace[space.id] ?? 0
+            const childSpaces = childSpacesByParent.get(space.id) ?? []
             const spaceEntities = entitiesBySpace.get(space.id) ?? []
             const expanded = expandedSpaceIds.has(space.id)
-            const hasEntities = spaceEntities.length > 0
+            const hasNested = childSpaces.length > 0 || spaceEntities.length > 0
 
             return (
               <li key={space.id}>
                 <div className="flex items-center gap-0.5">
-                  {hasEntities ? (
+                  {hasNested ? (
                     <button
                       type="button"
                       className="rounded p-1 text-ink-faint hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40"
@@ -191,30 +201,69 @@ export function AppSidebar({
                     <span className="text-xs tabular-nums text-ink-faint">{count}</span>
                   </Link>
                 </div>
-                {hasEntities && expanded ? (
+                {hasNested && expanded ? (
                   <ul className="mt-0.5 space-y-0.5 pb-1">
-                    {spaceEntities.map((entity) => {
-                      const entityHref = spaceEntityHref(space.id, entity.id)
-                      const entityActive = pathname === entityHref || pathname.startsWith(`${entityHref}/`)
-                      const initial = entityNavInitial(entity.name)
-                      return (
-                        <li key={entity.id}>
-                          <Link href={entityHref} onClick={closeMobile} className={subLinkClass(entityActive)}>
-                            <span
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                              style={{ backgroundColor: entity.color ?? '#5c6f84' }}
-                              aria-hidden
-                            >
-                              {initial}
-                            </span>
-                            <span className="min-w-0 flex-1 truncate">{entity.name}</span>
-                            {quietSet.has(entity.id) ? (
-                              <span className="shrink-0 text-[11px] text-ink-faint">quiet</span>
-                            ) : null}
-                          </Link>
-                        </li>
-                      )
-                    })}
+                    {childSpaces.length > 0
+                      ? childSpaces.map((child) => {
+                          const childHref = spaceListHref(child.id)
+                          const childActive =
+                            pathname === childHref || pathname.startsWith(`${childHref}/`)
+                          const childEntity = entities.find((e) => e.spaceId === child.id)
+                          const initial = spaceNavInitial(child.name)
+                          const isQuiet = childEntity ? quietSet.has(childEntity.id) : false
+                          return (
+                            <li key={child.id}>
+                              <Link
+                                href={childHref}
+                                onClick={closeMobile}
+                                className={subLinkClass(childActive)}
+                              >
+                                <span
+                                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                                  style={{ backgroundColor: child.color ?? '#5c6f84' }}
+                                  aria-hidden
+                                >
+                                  {initial}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate">{child.name}</span>
+                                {isQuiet ? (
+                                  <span className="shrink-0 text-[11px] lowercase text-red-600/80">
+                                    quiet
+                                  </span>
+                                ) : null}
+                              </Link>
+                            </li>
+                          )
+                        })
+                      : spaceEntities.map((entity) => {
+                          const entityHref = spaceEntityHref(space.id, entity.id)
+                          const entityActive =
+                            pathname === entityHref || pathname.startsWith(`${entityHref}/`)
+                          const initial = entityNavInitial(entity.name)
+                          return (
+                            <li key={entity.id}>
+                              <Link
+                                href={entityHref}
+                                onClick={closeMobile}
+                                className={subLinkClass(entityActive)}
+                              >
+                                <span
+                                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                                  style={{ backgroundColor: entity.color ?? '#5c6f84' }}
+                                  aria-hidden
+                                >
+                                  {initial}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate">{entity.name}</span>
+                                {quietSet.has(entity.id) ? (
+                                  <span className="shrink-0 text-[11px] lowercase text-red-600/80">
+                                    quiet
+                                  </span>
+                                ) : null}
+                              </Link>
+                            </li>
+                          )
+                        })}
                   </ul>
                 ) : null}
               </li>

@@ -1,5 +1,6 @@
 import { heroStoryPack, type HeroStoryPack, type PersonaKey } from '@/demo-data'
 import { ATHERA_CALENDAR_SUGGESTION } from '@/lib/landing/comparison-demo'
+import { scaleLandingDemoMs } from '@/lib/landing/constants'
 
 export { ATHERA_CALENDAR_SUGGESTION }
 
@@ -10,20 +11,20 @@ export function buildHeroStoryDemo(persona: PersonaKey): HeroStoryPack {
 }
 
 export const HERO_STORY_MS = {
-  step1End: 2000,
-  step2End: 5500,
-  step3End: 10000,
-  step4End: 15500,
-  loopEnd: 18000,
-  cleanStagger: 100,
-  clusterAt: 2700,
-  suggestHold: 3000,
-  cursorMs: 600,
-  sidebarMs: 600,
-  calendarSuggestHold: 3500,
-  calendarHold: 2000,
-  personalHold: 1500,
-  loopFade: 1000,
+  step1End: scaleLandingDemoMs(2000),
+  step2End: scaleLandingDemoMs(5500),
+  step3End: scaleLandingDemoMs(10000),
+  step4End: scaleLandingDemoMs(15500),
+  loopEnd: scaleLandingDemoMs(18000),
+  cleanStagger: scaleLandingDemoMs(100),
+  clusterAt: scaleLandingDemoMs(2700),
+  suggestHold: scaleLandingDemoMs(3000),
+  cursorMs: scaleLandingDemoMs(600),
+  sidebarMs: scaleLandingDemoMs(600),
+  calendarSuggestHold: scaleLandingDemoMs(3500),
+  calendarHold: scaleLandingDemoMs(2000),
+  personalHold: scaleLandingDemoMs(1500),
+  loopFade: scaleLandingDemoMs(1000),
 } as const
 
 export function heroStoryDurationMs(): number {
@@ -167,7 +168,7 @@ export function heroStoryFlagsFromElapsed(elapsed: number, pack: HeroStoryPack):
     cursorClick = elapsed >= calCursorStart + t.cursorMs * 0.65
   } else if (elapsed >= t.step4End && elapsed < t.step4End + t.personalHold * 0.4) {
     cursorTarget = 'personalSpace'
-    cursorClick = elapsed >= t.step4End + 180
+    cursorClick = elapsed >= t.step4End + scaleLandingDemoMs(180)
   }
 
   return {

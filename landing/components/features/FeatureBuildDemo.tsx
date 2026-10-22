@@ -13,6 +13,7 @@ import {
   comparisonHeader,
   comparisonTasksForPersona,
 } from '@/lib/landing/comparison-demo'
+import { LANDING_FEATURE_STEP_MS } from '@/lib/landing/constants'
 import { useLandingPersona } from '@/components/landing/LandingPersonaContext'
 import { useFeatureDemoSteps } from '@/lib/landing/useFeatureDemoSteps'
 import FeatureDemoShell from '@/components/landing/features/FeatureDemoShell'
@@ -47,7 +48,7 @@ export default function FeatureBuildDemo() {
   const playback = useFeatureDemoSteps({
     resetKey: `feature-build-${persona}`,
     stepCount: 4,
-    stepDurationMs: 5200,
+    stepDurationMs: LANDING_FEATURE_STEP_MS,
     inView,
     reducedMotion: !!reducedMotion,
     analyticsPrefix: 'build',

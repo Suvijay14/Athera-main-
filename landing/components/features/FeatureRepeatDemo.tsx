@@ -9,6 +9,7 @@ import {
   SCROLL_REPEAT_STORY_STEPS,
   ScrollRepeatStoryMock,
 } from '@/components/landing/ScrollStoryHowItWorks'
+import { scaleLandingDemoMs } from '@/lib/landing/constants'
 
 const CAPTIONS = SCROLL_REPEAT_STORY_STEPS.map((s) => s.short)
 
@@ -21,7 +22,7 @@ export default function FeatureRepeatDemo() {
   const playback = useFeatureDemoSteps({
     resetKey: `feature-repeat-${persona}`,
     stepCount: 3,
-    stepDurationMs: 6500,
+    stepDurationMs: scaleLandingDemoMs(6500),
     inView,
     reducedMotion: !!reducedMotion,
     analyticsPrefix: 'repeat',

@@ -104,6 +104,7 @@ export async function createSpace(
     .from('spaces')
     .insert({
       workspace_id: workspaceId,
+      parent_space_id: parsed.parentSpaceId ?? null,
       name: parsed.name,
       icon: parsed.icon ?? null,
       color: parsed.color ?? null,
@@ -226,6 +227,7 @@ export async function updateSpace(
   if (parsed.icon !== undefined) row.icon = parsed.icon
   if (parsed.color !== undefined) row.color = parsed.color
   if (parsed.sortOrder !== undefined) row.sort_order = parsed.sortOrder
+  if (parsed.parentSpaceId !== undefined) row.parent_space_id = parsed.parentSpaceId
 
   const { data, error } = await client
     .from('spaces')

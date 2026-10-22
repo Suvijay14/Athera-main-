@@ -74,6 +74,7 @@ export const workspaceSchema = z.object({
 export const spaceSchema = z.object({
   id: z.string().uuid(),
   workspaceId: z.string().uuid(),
+  parentSpaceId: z.string().uuid().nullable(),
   name: z.string().min(1),
   icon: z.string().nullable(),
   color: z.string().nullable(),
@@ -306,6 +307,7 @@ export const createSpaceInputSchema = z.object({
   icon: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   sortOrder: z.number().int().default(0),
+  parentSpaceId: z.string().uuid().nullable().optional(),
 })
 
 export const updateSpaceInputSchema = z.object({
@@ -313,6 +315,7 @@ export const updateSpaceInputSchema = z.object({
   icon: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   sortOrder: z.number().int().optional(),
+  parentSpaceId: z.string().uuid().nullable().optional(),
 })
 
 export const createEntityInputSchema = z.object({

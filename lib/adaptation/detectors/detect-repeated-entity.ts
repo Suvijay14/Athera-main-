@@ -4,11 +4,7 @@ import {
   pickRepeatedEntityCandidate,
 } from '@/lib/adaptation/entity-repeated-logic'
 import { isDedupeBlocked } from '@/lib/adaptation/detector-utils'
-import { ENTITY_FIELD_COLORS } from '@/lib/adaptation/entity-colors'
-
-function fieldKeyForKind(kind: string): string {
-  return kind.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'contact'
-}
+import { buildRepeatedEntityOperations } from '@/lib/adaptation/build-repeated-entity-operations'
 
 function labelForKind(kind: string): string {
   const k = kind.toLowerCase()
@@ -38,11 +34,8 @@ export function detectRepeatedEntity(ctx: DetectionContext): SuggestionDraft | n
     return null
   }
 
-  const fieldKey = fieldKeyForKind(picked.kind)
   const n = picked.itemCount
   const displayName = picked.primaryName
-
-  const uniqueNames = [...new Set(Object.values(picked.backfillValues))]
 
   return {
     type: 'repeated-entity',
@@ -56,38 +49,6 @@ export function detectRepeatedEntity(ctx: DetectionContext): SuggestionDraft | n
     },
     confidence: picked.confidence,
     dedupeKey,
-    operations: [
-      {
-        op: 'create_field',
-        field: {
-          key: fieldKey,
-          label: labelForKind(picked.kind),
-          type: 'entity',
-          entityKind: picked.kind,
-        },
-      },
-      ...uniqueNames.map((name, i) => ({
-        op: 'create_entity' as const,
-        entity: {
-          spaceId: picked.spaceId,
-          kind: picked.kind,
-          name,
-          color: ENTITY_FIELD_COLORS[i % ENTITY_FIELD_COLORS.length] ?? '#6366f1',
-        },
-      })),
-      {
-        op: 'backfill_field',
-        key: fieldKey,
-        values: picked.backfillValues,
-      },
-      {
-        op: 'create_view',
-        view: {
-          name: `${labelForKind(picked.kind)}s`,
-          type: 'grouped',
-          groupByField: fieldKey,
-        },
-      },
-    ],
+    operations: buildRepeatedEntityOperations(picked),
   }
 }

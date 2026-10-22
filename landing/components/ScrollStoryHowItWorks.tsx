@@ -9,16 +9,17 @@ import { useLandingPersona } from '@/components/landing/LandingPersonaContext'
 import { trackLandingEvent } from '@/lib/landing/analytics'
 import DemoReshapeGridFlash from '@/components/landing/DemoReshapeGridFlash'
 import DemoItemIcon from '@/components/landing/DemoItemIcon'
+import { scaleLandingDemoMs, scaleLandingDemoSec } from '@/lib/landing/constants'
 
 type StoryStep = 0 | 1 | 2
 
-const TAP_ARROW_DELAY = 0.4
-const TAP_ARROW_DURATION = 0.48
-const TAP_NOTE_DELAY = TAP_ARROW_DELAY + TAP_ARROW_DURATION + 0.06
-const AUTO_REPEAT_MS = 5000
-const SPOTLIGHT_FADE = 0.4
-const TYPE_CHAR_MS = 42
-const TYPE_ROW_PAUSE_MS = 380
+const TAP_ARROW_DELAY = scaleLandingDemoSec(0.4)
+const TAP_ARROW_DURATION = scaleLandingDemoSec(0.48)
+const TAP_NOTE_DELAY = TAP_ARROW_DELAY + TAP_ARROW_DURATION + scaleLandingDemoSec(0.06)
+const AUTO_REPEAT_MS = scaleLandingDemoMs(5000)
+const SPOTLIGHT_FADE = scaleLandingDemoSec(0.4)
+const TYPE_CHAR_MS = scaleLandingDemoMs(42)
+const TYPE_ROW_PAUSE_MS = scaleLandingDemoMs(380)
 
 const PAST_HISTORY_ROWS = [0, 1, 2] as const
 const THIS_WEEK_ROW = 3

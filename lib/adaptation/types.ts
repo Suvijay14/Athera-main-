@@ -162,10 +162,19 @@ export const operationSchema = z.discriminatedUnion('op', [
       icon: z.string().nullable().optional(),
       color: z.string().nullable().optional(),
       sortOrder: z.number().int().optional(),
+      parentSpaceId: z.string().uuid().nullable().optional(),
       preserveSpaceId: z.string().uuid().optional(),
     }),
   }),
   z.object({ op: z.literal('delete_space'), spaceId: z.string().uuid() }),
+  z.object({
+    op: z.literal('update_space'),
+    spaceId: z.string().uuid(),
+    patch: z.object({
+      name: z.string().min(1).optional(),
+      parentSpaceId: z.string().uuid().nullable().optional(),
+    }),
+  }),
   z.object({
     op: z.literal('move_work_item_space'),
     itemId: z.string().uuid(),
