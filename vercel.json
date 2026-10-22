@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/nightly-detection",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/retention",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}

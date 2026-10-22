@@ -25,7 +25,7 @@ export function formatWorkItemDueCell(dueDate: string | null, startAt: string | 
     return formatIsoDateTimeForDisplay(startAt)
   }
   if (!dueDate) {
-    return '—'
+    return 'No date'
   }
   if (DATE_ONLY.test(dueDate)) {
     return formatDateOnlyYmd(dueDate)

@@ -10,6 +10,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
       workspaceName={data.workspace.name}
       defaultSpaceId={data.defaultSpaceId}
       quietEntityIds={data.quietEntityIds}
+      quietEntityWeeks={data.quietEntityWeeks}
       spaces={data.spaces}
       itemCountsBySpace={data.itemCountsBySpace}
       jumpItems={data.jumpItems}

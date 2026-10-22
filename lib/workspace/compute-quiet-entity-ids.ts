@@ -1,3 +1,5 @@
+import { differenceInDays } from 'date-fns'
+
 import type { Entity, FieldDefinition, RecurrenceRule, WorkItem } from '@/lib/db/schemas'
 import {
   isArchiveCandidateEntity,
@@ -7,15 +9,24 @@ import { computeEntityRhythm } from '@/lib/adaptation/entity-rhythm'
 import { entityFieldKeys, itemsLinkedToEntity } from '@/lib/workspace/entity-items'
 import { entityHasActiveRecurrence } from '@/lib/workspace/recurrence-entity'
 
-export function computeQuietEntityIds(
+export type QuietEntityDetail = {
+  entityId: string
+  weeksQuiet: number
+}
+
+function weeksSinceActivity(lastActivityAt: Date, now: Date): number {
+  return Math.max(1, Math.round(differenceInDays(now, lastActivityAt) / 7))
+}
+
+export function computeQuietEntityDetails(
   entities: Entity[],
   items: WorkItem[],
   fields: FieldDefinition[],
   recurrenceRules: RecurrenceRule[],
   now: Date
-): Set<string> {
+): QuietEntityDetail[] {
   const fieldKeys = entityFieldKeys(fields)
-  const quiet = new Set<string>()
+  const quiet: QuietEntityDetail[] = []
 
   for (const entity of entities) {
     if (entity.archivedAt) {
@@ -34,12 +45,27 @@ export function computeQuietEntityIds(
       excludedFromSuggestions: entity.excludedFromSuggestions,
       rhythm,
     }
-    if (isArchiveCandidateEntity(candidate, now)) {
-      quiet.add(entity.id)
+    if (isArchiveCandidateEntity(candidate, now) && rhythm.lastActivityAt) {
+      quiet.push({
+        entityId: entity.id,
+        weeksQuiet: weeksSinceActivity(rhythm.lastActivityAt, now),
+      })
     }
   }
 
   return quiet
+}
+
+export function computeQuietEntityIds(
+  entities: Entity[],
+  items: WorkItem[],
+  fields: FieldDefinition[],
+  recurrenceRules: RecurrenceRule[],
+  now: Date
+): Set<string> {
+  return new Set(
+    computeQuietEntityDetails(entities, items, fields, recurrenceRules, now).map((q) => q.entityId)
+  )
 }
 
 export function groupEntitiesBySpace(entities: Entity[]): Map<string, Entity[]> {

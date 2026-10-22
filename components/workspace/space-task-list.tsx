@@ -2,7 +2,8 @@
 
 import { Briefcase, FileText, Phone, Repeat2 } from 'lucide-react'
 import { useWorkspaceUi } from '@/components/workspace/workspace-ui-context'
-import type { Entity, FieldDefinition, Space } from '@/lib/db/schemas'
+import type { Entity, FieldDefinition, RecurrenceRule, Space } from '@/lib/db/schemas'
+import { formatRecurrencePill } from '@/lib/workspace/recurrence'
 import { spaceNavInitial } from '@/lib/workspace/space-hierarchy'
 import { spaceDisplayColor } from '@/lib/workspace/space-display-color'
 import type { DisplayWorkItem } from '@/lib/workspace/merge-recurrence-display-items'
@@ -19,6 +20,8 @@ type SpaceTaskListProps = {
   space: Space
   /** When set, items are shown in sections per child space (parent space list). */
   childSpaces?: Space[]
+  recurrenceRules?: RecurrenceRule[]
+  quietEntityWeeks?: Record<string, number>
   itemLabel: string
   loading?: boolean
 }
@@ -40,16 +43,19 @@ function TaskRows({
   fields,
   entities,
   spaceName,
+  recurrenceRules,
   openItem,
   selectedItemId,
 }: {
   items: DisplayWorkItem[]
   fields: FieldDefinition[]
   entities: Entity[]
+  recurrenceRules: RecurrenceRule[]
   spaceName: string
   openItem: (id: string) => void
   selectedItemId: string | null
 }) {
+  const ruleById = new Map(recurrenceRules.map((r) => [r.id, r]))
   return (
     <>
       {items.map((item) => {
@@ -72,8 +78,13 @@ function TaskRows({
                   From notes
                 </span>
               ) : null}
-              {item.recurrenceId || item.isVirtualRecurrence ? (
-                <Repeat2 className="h-3.5 w-3.5 shrink-0 text-ink-faint" aria-hidden />
+              {item.recurrenceId ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-medium text-ink-muted">
+                  <Repeat2 className="h-3 w-3" aria-hidden />
+                  {ruleById.get(item.recurrenceId)
+                    ? formatRecurrencePill(ruleById.get(item.recurrenceId)!)
+                    : 'Repeats'}
+                </span>
               ) : null}
               <span className="shrink-0 tabular-nums text-ink-muted">{when}</span>
             </button>
@@ -90,6 +101,8 @@ export function SpaceTaskList({
   entities,
   space,
   childSpaces = [],
+  recurrenceRules = [],
+  quietEntityWeeks = {},
   itemLabel,
   loading = false,
 }: SpaceTaskListProps) {
@@ -133,9 +146,8 @@ export function SpaceTaskList({
       <div className="space-y-6">
         {childSpaces.map((child) => {
           const groupItems = groups.get(child.id) ?? []
-          if (groupItems.length === 0) {
-            return null
-          }
+          const childEntity = entities.find((e) => e.spaceId === child.id)
+          const quietWeeks = childEntity ? quietEntityWeeks[childEntity.id] : undefined
           return (
             <section key={child.id}>
               <div className="mb-2 flex items-center gap-2 px-1">
@@ -148,19 +160,24 @@ export function SpaceTaskList({
                 </span>
                 <h2 className="text-sm font-semibold text-ink-primary">{child.name}</h2>
                 <span className="text-xs text-ink-faint">
-                  {groupItems.length} item{groupItems.length === 1 ? '' : 's'}
+                  {groupItems.length === 0
+                    ? `No open items${quietWeeks ? ` · quiet for ${quietWeeks} week${quietWeeks === 1 ? '' : 's'}` : ''}`
+                    : `${groupItems.length} item${groupItems.length === 1 ? '' : 's'}`}
                 </span>
               </div>
-              <ul className="divide-y divide-border-delicate rounded-xl border border-border-delicate bg-surface-paper">
-                <TaskRows
-                  items={groupItems}
-                  fields={fields}
-                  entities={entities}
-                  spaceName={child.name}
-                  openItem={openItem}
-                  selectedItemId={selectedItemId}
-                />
-              </ul>
+              {groupItems.length > 0 ? (
+                <ul className="divide-y divide-border-delicate rounded-xl border border-border-delicate bg-surface-paper">
+                  <TaskRows
+                    items={groupItems}
+                    fields={fields}
+                    entities={entities}
+                    recurrenceRules={recurrenceRules}
+                    spaceName={child.name}
+                    openItem={openItem}
+                    selectedItemId={selectedItemId}
+                  />
+                </ul>
+              ) : null}
             </section>
           )
         })}
@@ -172,6 +189,7 @@ export function SpaceTaskList({
                 items={parentItems}
                 fields={fields}
                 entities={entities}
+                recurrenceRules={recurrenceRules}
                 spaceName={space.name}
                 openItem={openItem}
                 selectedItemId={selectedItemId}
@@ -189,6 +207,7 @@ export function SpaceTaskList({
         items={items}
         fields={fields}
         entities={entities}
+        recurrenceRules={recurrenceRules}
         spaceName={space.name}
         openItem={openItem}
         selectedItemId={selectedItemId}

@@ -1,3 +1,5 @@
+import { format, parseISO } from 'date-fns'
+
 import type { RecurrenceRule, WorkItem } from '@/lib/db/schemas'
 
 import { generateInstances } from './recurrence'
@@ -41,11 +43,39 @@ function instanceToDisplayItem(
   }
 }
 
-function materializedKey(item: WorkItem): string | null {
-  if (!item.recurrenceId || !item.recurrenceInstanceDate) {
+/** yyyy-mm-dd for a stored occurrence (explicit column or inferred from schedule). */
+export function instanceDateFromWorkItem(item: WorkItem): string | null {
+  if (item.recurrenceInstanceDate?.trim()) {
+    return item.recurrenceInstanceDate.trim()
+  }
+  if (!item.recurrenceId) {
     return null
   }
-  return `${item.recurrenceId}:${item.recurrenceInstanceDate}`
+  if (item.startAt?.trim()) {
+    try {
+      return format(parseISO(item.startAt), 'yyyy-MM-dd')
+    } catch {
+      return null
+    }
+  }
+  if (item.dueDate?.trim()) {
+    return item.dueDate.trim()
+  }
+  return null
+}
+
+function coveredRecurrenceKeys(items: WorkItem[]): Set<string> {
+  const keys = new Set<string>()
+  for (const item of items) {
+    if (!item.recurrenceId) {
+      continue
+    }
+    const date = instanceDateFromWorkItem(item)
+    if (date) {
+      keys.add(`${item.recurrenceId}:${date}`)
+    }
+  }
+  return keys
 }
 
 export function mergeWorkItemsWithRecurrenceInstances(
@@ -56,23 +86,16 @@ export function mergeWorkItemsWithRecurrenceInstances(
   rangeEnd: Date,
   now: Date = new Date()
 ): DisplayWorkItem[] {
-  const spaceIds = new Set(storedItems.map((i) => i.spaceId))
-  const materialized = new Set<string>()
-  for (const item of storedItems) {
-    const key = materializedKey(item)
-    if (key) {
-      materialized.add(key)
-    }
-  }
+  const covered = coveredRecurrenceKeys(storedItems)
 
   const virtual: DisplayWorkItem[] = []
   for (const rule of rules) {
-    if (!rule.active || !spaceIds.has(rule.spaceId)) {
+    if (!rule.active) {
       continue
     }
     for (const inst of generateInstances(rule, rangeStart, rangeEnd)) {
       const key = `${inst.recurrenceId}:${inst.instanceDate}`
-      if (materialized.has(key)) {
+      if (covered.has(key)) {
         continue
       }
       virtual.push(instanceToDisplayItem(workspaceId, inst, now))

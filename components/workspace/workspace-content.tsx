@@ -63,6 +63,7 @@ type WorkspaceContentProps = {
   activeChanges: ChangeLogListItem[]
   calendarConnection?: CalendarConnectionSummary | null
   childSpaces?: Space[]
+  quietEntityWeeks?: Record<string, number>
 }
 
 function ViewBody({
@@ -77,6 +78,8 @@ function ViewBody({
   workspaceId,
   currentSpace,
   childSpaces,
+  recurrenceRules,
+  quietEntityWeeks,
 }: {
   spaceView: 'list' | 'calendar'
   activeViewId: string | null
@@ -90,6 +93,7 @@ function ViewBody({
   workspaceId: string
   currentSpace: Space
   childSpaces: Space[]
+  quietEntityWeeks?: Record<string, number>
 }) {
   if (spaceView === 'calendar') {
     const calendarView = builtinSpaceCalendarView(workspaceId)
@@ -113,6 +117,8 @@ function ViewBody({
         entities={entities}
         space={currentSpace}
         childSpaces={childSpaces}
+        recurrenceRules={recurrenceRules ?? []}
+        quietEntityWeeks={quietEntityWeeks}
         itemLabel={itemLabel}
       />
     )
@@ -135,6 +141,8 @@ function ViewBody({
         entities={entities}
         space={currentSpace}
         childSpaces={childSpaces}
+        recurrenceRules={recurrenceRules ?? []}
+        quietEntityWeeks={quietEntityWeeks}
         itemLabel={itemLabel}
       />
     )
@@ -206,6 +214,7 @@ export function WorkspaceContent({
   recurrenceRules = [],
   calendarConnection = null,
   childSpaces = [],
+  quietEntityWeeks = {},
 }: WorkspaceContentProps) {
   const [managerOpen, setManagerOpen] = useState(false)
   const itemLabel = workspace.itemLabel
@@ -301,6 +310,8 @@ export function WorkspaceContent({
             workspaceId={workspace.id}
             currentSpace={currentSpace}
             childSpaces={childSpaces}
+            recurrenceRules={recurrenceRules}
+            quietEntityWeeks={quietEntityWeeks}
           />
         </div>
         <ItemDetailPanelHost

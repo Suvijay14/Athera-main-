@@ -11,7 +11,7 @@ import { useWorkspaceUi } from '@/components/workspace/workspace-ui-context'
 import { EntityChip } from '@/components/workspace/entity-chip'
 import type { Entity, FieldDefinition } from '@/lib/db/schemas'
 import type { DisplayWorkItem } from '@/lib/workspace/merge-recurrence-display-items'
-import { formatWorkItemDueCell } from '@/lib/workspace/format-item-datetime'
+import { formatWorkItemListWhen } from '@/lib/workspace/format-item-datetime'
 
 type WorkItemListProps = {
   items: DisplayWorkItem[]
@@ -101,7 +101,7 @@ export function WorkItemList({
                   </span>
                 </td>
                 <td className="px-3 py-2 text-neutral-600">
-                  {formatWorkItemDueCell(item.dueDate, item.startAt)}
+                  {formatWorkItemListWhen(item.dueDate, item.startAt, item.endAt)}
                 </td>
                   {visibleFields.map((f) => (
                     <td key={f.id} className="px-3 py-2">

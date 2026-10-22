@@ -21,6 +21,7 @@ type WorkspaceShellProps = {
   workspaceName: string
   defaultSpaceId: string
   quietEntityIds: string[]
+  quietEntityWeeks?: Record<string, number>
   spaces: Space[]
   itemCountsBySpace: Record<string, number>
   jumpItems: JumpItem[]
@@ -43,6 +44,7 @@ export function WorkspaceShell({
   workspaceName,
   defaultSpaceId: _defaultSpaceId,
   quietEntityIds,
+  quietEntityWeeks = {},
   spaces,
   itemCountsBySpace,
   jumpItems,
@@ -73,6 +75,7 @@ export function WorkspaceShell({
               entities={entities}
               itemCountsBySpace={itemCountsBySpace}
               quietEntityIds={quietEntityIds}
+              quietEntityWeeks={quietEntityWeeks}
               userEmail={userEmail}
               workspaceName={workspaceName}
               mobileOpen={mobileOpen}

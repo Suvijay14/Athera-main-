@@ -12,13 +12,26 @@ export function entityHasActiveRecurrence(
   if (entityFieldKeys.length === 0) {
     return false
   }
-  const activeRuleIds = new Set(rules.filter((r) => r.active).map((r) => r.id))
+  const activeRules = rules.filter((r) => r.active)
+  const activeRuleIds = new Set(activeRules.map((r) => r.id))
   for (const item of items) {
     if (!item.recurrenceId || !activeRuleIds.has(item.recurrenceId)) {
       continue
     }
     if (itemLinksToEntity(item, entityId, entityFieldKeys)) {
       return true
+    }
+  }
+  for (const rule of activeRules) {
+    const raw = rule.templateItem.data
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      continue
+    }
+    const data = raw as Record<string, unknown>
+    for (const key of entityFieldKeys) {
+      if (data[key] === entityId) {
+        return true
+      }
     }
   }
   return false

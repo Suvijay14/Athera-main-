@@ -35,6 +35,7 @@ export default async function SpaceCalendarPage({ params }: PageProps) {
         data.calendarConnection ? toCalendarConnectionSummary(data.calendarConnection) : null
       }
       childSpaces={data.childSpaces}
+      quietEntityWeeks={data.quietEntityWeeks}
     />
   )
 }

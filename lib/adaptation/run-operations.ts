@@ -397,6 +397,37 @@ export async function executeOperation(
              where workspace_id = $1 and id = any($2::uuid[])`,
             [workspaceId, linkIds, ruleId]
           )
+          for (const itemId of linkIds) {
+            const itemRow = await tx.query(
+              `select due_date, start_at, recurrence_instance_date from public.work_items
+               where workspace_id = $1 and id = $2`,
+              [workspaceId, itemId]
+            )
+            if (itemRow.rowCount === 0) {
+              continue
+            }
+            const row = itemRow.rows[0] as {
+              due_date: string | null
+              start_at: string | null
+              recurrence_instance_date: string | null
+            }
+            if (row.recurrence_instance_date) {
+              continue
+            }
+            let instanceDate: string | null = null
+            if (row.start_at) {
+              instanceDate = row.start_at.slice(0, 10)
+            } else if (row.due_date) {
+              instanceDate = row.due_date
+            }
+            if (instanceDate) {
+              await tx.query(
+                `update public.work_items set recurrence_instance_date = $3
+                 where workspace_id = $1 and id = $2`,
+                [workspaceId, itemId, instanceDate]
+              )
+            }
+          }
         }
         return [
           { op: 'delete_recurrence_rule', ruleId },

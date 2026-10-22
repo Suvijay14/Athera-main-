@@ -13,7 +13,7 @@ import { addMonths, subMonths } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentWorkspace } from '@/lib/supabase/get-current-workspace'
 import { mergeWorkItemsWithRecurrenceInstances } from '@/lib/workspace/merge-recurrence-display-items'
-import { computeQuietEntityIds } from '@/lib/workspace/compute-quiet-entity-ids'
+import { computeQuietEntityDetails } from '@/lib/workspace/compute-quiet-entity-ids'
 import { rollupItemCountsBySpace, spaceTreeIds, buildChildSpacesByParentId } from '@/lib/workspace/space-hierarchy'
 
 async function loadWorkspaceCore(client: Awaited<ReturnType<typeof createClient>>, workspaceId: string) {
@@ -76,13 +76,17 @@ export async function loadWorkspaceShellData() {
     listRecurrenceRules(client, ctx.workspace.id),
   ])
   const now = new Date()
-  const quietEntityIds = [...computeQuietEntityIds(
+  const quietDetails = computeQuietEntityDetails(
     entities,
     itemsForQuiet.items,
     core.fields,
     recurrenceRules,
     now
-  )]
+  )
+  const quietEntityIds = quietDetails.map((q) => q.entityId)
+  const quietEntityWeeks = Object.fromEntries(
+    quietDetails.map((q) => [q.entityId, q.weeksQuiet])
+  )
   let notePages: { pageId: string; ownerType: string; ownerId: string; bodyText: string }[] = []
   try {
     const { listPagesForWorkspace } = await import('@/lib/db/pages')
@@ -97,6 +101,7 @@ export async function loadWorkspaceShellData() {
     entities,
     notePages,
     quietEntityIds,
+    quietEntityWeeks,
     defaultSpaceId: core.defaultSpace.id,
   }
 }
@@ -139,6 +144,16 @@ export async function loadSpacePageData(spaceId: string) {
     addMonths(now, 6),
     now
   )
+  const quietDetails = computeQuietEntityDetails(
+    entitiesAll,
+    itemsResult.items,
+    core.fields,
+    recurrenceRules,
+    now
+  )
+  const quietEntityWeeks = Object.fromEntries(
+    quietDetails.map((q) => [q.entityId, q.weeksQuiet])
+  )
   return {
     ...ctx,
     ...core,
@@ -148,6 +163,7 @@ export async function loadSpacePageData(spaceId: string) {
     items: displayItems,
     calendarConnection,
     childSpaces,
+    quietEntityWeeks,
   }
 }
 
@@ -155,11 +171,24 @@ export async function loadOverviewPageData() {
   const ctx = await getCurrentWorkspace()
   const client = await createClient()
   const core = await loadWorkspaceCore(client, ctx.workspace.id)
-  const itemsResult = await listItems(client, ctx.workspace.id, { limit: 500 })
+  const [itemsResult, recurrenceRules] = await Promise.all([
+    listItems(client, ctx.workspace.id, { limit: 500 }),
+    listRecurrenceRules(client, ctx.workspace.id),
+  ])
+  const now = new Date()
+  const displayItems = mergeWorkItemsWithRecurrenceInstances(
+    ctx.workspace.id,
+    itemsResult.items,
+    recurrenceRules.filter((r) => r.active),
+    subMonths(now, 2),
+    addMonths(now, 6),
+    now
+  )
   return {
     ...ctx,
     ...core,
-    items: itemsResult.items,
+    items: displayItems,
+    recurrenceRules,
   }
 }
 

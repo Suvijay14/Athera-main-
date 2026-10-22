@@ -29,6 +29,7 @@ type AppSidebarProps = {
   entities: Entity[]
   itemCountsBySpace: Record<string, number>
   quietEntityIds: string[]
+  quietEntityWeeks?: Record<string, number>
   userEmail?: string
   workspaceName: string
   mobileOpen: boolean
@@ -54,6 +55,7 @@ export function AppSidebar({
   entities,
   itemCountsBySpace,
   quietEntityIds,
+  quietEntityWeeks = {},
   workspaceName,
   mobileOpen,
   onMobileOpenChange,
@@ -213,6 +215,10 @@ export function AppSidebar({
                           const childEntity = entities.find((e) => e.spaceId === child.id)
                           const initial = spaceNavInitial(child.name)
                           const isQuiet = childEntity ? quietSet.has(childEntity.id) : false
+                          const quietWeeks =
+                            childEntity && isQuiet
+                              ? quietEntityWeeks[childEntity.id]
+                              : undefined
                           return (
                             <li key={child.id}>
                               <Link
@@ -230,7 +236,9 @@ export function AppSidebar({
                                 <span className="min-w-0 flex-1 truncate">{child.name}</span>
                                 {isQuiet ? (
                                   <span className="shrink-0 text-[11px] lowercase text-red-600/80">
-                                    quiet
+                                    {quietWeeks
+                                      ? `quiet for ${quietWeeks} week${quietWeeks === 1 ? '' : 's'}`
+                                      : 'quiet'}
                                   </span>
                                 ) : null}
                               </Link>
@@ -264,7 +272,9 @@ export function AppSidebar({
                                 <span className="min-w-0 flex-1 truncate">{entity.name}</span>
                                 {quietSet.has(entity.id) ? (
                                   <span className="shrink-0 text-[11px] lowercase text-red-600/80">
-                                    quiet
+                                    {quietEntityWeeks[entity.id]
+                                      ? `quiet for ${quietEntityWeeks[entity.id]} week${quietEntityWeeks[entity.id] === 1 ? '' : 's'}`
+                                      : 'quiet'}
                                   </span>
                                 ) : null}
                               </Link>

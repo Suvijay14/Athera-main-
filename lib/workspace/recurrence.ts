@@ -124,3 +124,15 @@ export function formatRecurrenceLabel(rule: RecurrenceRule): string {
   const time = rule.timeOfDay ? ` · ${rule.timeOfDay}` : ''
   return `${every} ${days}${time}`.trim()
 }
+
+/** Compact pill for list rows (mockup: "Every Fri"). */
+export function formatRecurrencePill(rule: RecurrenceRule): string {
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  if (rule.intervalCount === 2) {
+    return formatRecurrenceLabel(rule)
+  }
+  if (rule.byWeekday.length === 1) {
+    return `Every ${dayNames[rule.byWeekday[0]!] ?? 'week'}`
+  }
+  return formatRecurrenceLabel(rule)
+}

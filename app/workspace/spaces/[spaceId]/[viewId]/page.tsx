@@ -39,6 +39,7 @@ export default async function SpaceViewPage({ params }: PageProps) {
         data.calendarConnection ? toCalendarConnectionSummary(data.calendarConnection) : null
       }
       childSpaces={data.childSpaces}
+      quietEntityWeeks={data.quietEntityWeeks}
     />
   )
 }
