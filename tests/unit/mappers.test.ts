@@ -20,6 +20,7 @@ describe('mappers round trip shape', () => {
       id: '00000000-0000-4000-8000-000000000020',
       workspace_id: '00000000-0000-4000-8000-000000000001',
       name: 'My space',
+      parent_space_id: null,
       icon: null,
       color: null,
       sort_order: 0,

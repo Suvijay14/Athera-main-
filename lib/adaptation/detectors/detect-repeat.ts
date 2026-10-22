@@ -20,6 +20,7 @@ export function detectRepeat(ctx: DetectionContext): SuggestionDraft | null {
     type: 'repeat-pattern',
     reason: match.reason,
     evidence: {
+      displayTitle: match.items[match.items.length - 1]?.title ?? match.normalizedTitle,
       normalizedTitle: match.normalizedTitle,
       count: match.items.length,
       projectedDates: match.projectedDates,

@@ -31,11 +31,6 @@ export function describeSpaceAdaptation(
     }
   }
 
-  const calendarView = views.find((v) => v.source === 'athera' && v.type === 'calendar' && v.visible)
-  if (calendarView) {
-    return 'Calendar view added'
-  }
-
   return null
 }
 

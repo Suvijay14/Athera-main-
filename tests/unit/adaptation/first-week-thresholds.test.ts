@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import { detectCalendarView } from '@/lib/adaptation/detectors/detect-calendar-view'
 import { detectRepeatedEntity } from '@/lib/adaptation/detectors/detect-repeated-entity'
 import { pickRepeatedEntityCandidate, buildCandidatesFromExtractions } from '@/lib/adaptation/entity-repeated-logic'
 import type { StoredItemExtraction } from '@/lib/db/item-entity-extractions'
@@ -25,27 +24,6 @@ function extraction(itemId: string, name: string): StoredItemExtraction {
 }
 
 describe('first-week lowered thresholds', () => {
-  it('calendar view fires with 3 dated items in first week only', () => {
-    const items = ['a', 'b', 'c'].map((id) =>
-      makeItem({
-        id,
-        title: `Meeting ${id}`,
-        spaceId,
-        startAt: '2026-03-12T15:00:00.000Z',
-        createdAt: recentCreatedAt,
-      })
-    )
-    const firstWeek = detectCalendarView(
-      baseContext({ items, views: [], isFirstWeek: true, workspaceCreatedAt: '2026-03-14T00:00:00.000Z' })
-    )
-    expect(firstWeek).not.toBeNull()
-
-    const mature = detectCalendarView(
-      baseContext({ items, views: [], isFirstWeek: false, workspaceCreatedAt: '2026-01-01T00:00:00.000Z' })
-    )
-    expect(mature).toBeNull()
-  })
-
   it('repeated entity fires for one name x3 in first week via confidence divisor', () => {
     const ids = ['i1', 'i2', 'i3'] as const
     const items = ids.map((id) =>

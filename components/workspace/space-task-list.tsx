@@ -2,8 +2,9 @@
 
 import { Briefcase, FileText, Phone, Repeat2 } from 'lucide-react'
 import { useWorkspaceUi } from '@/components/workspace/workspace-ui-context'
-import type { Entity, FieldDefinition, Space, WorkItem } from '@/lib/db/schemas'
+import type { Entity, FieldDefinition, Space } from '@/lib/db/schemas'
 import { spaceNavInitial } from '@/lib/workspace/space-hierarchy'
+import { spaceDisplayColor } from '@/lib/workspace/space-display-color'
 import type { DisplayWorkItem } from '@/lib/workspace/merge-recurrence-display-items'
 import { inferTaskRowIconKind } from '@/lib/workspace/infer-task-row-icon'
 import {
@@ -34,40 +35,26 @@ function RowIcon({ title }: { title: string }) {
   return <Briefcase className={className} aria-hidden />
 }
 
-export function SpaceTaskList({
+function TaskRows({
   items,
   fields,
   entities,
-  space,
-  itemLabel,
-  loading = false,
-}: SpaceTaskListProps) {
-  const { openItem, selectedItemId } = useWorkspaceUi()
-  const plural = `${itemLabel}s`
-
-  if (loading) {
-    return (
-      <div className="space-y-2" aria-busy="true">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-container" />
-        ))}
-      </div>
-    )
-  }
-
-  if (items.length === 0) {
-    return (
-      <p className="rounded-xl border border-dashed border-border-delicate bg-surface-paper/50 px-4 py-10 text-center text-sm text-ink-muted">
-        No {plural} yet. Add one above to get started.
-      </p>
-    )
-  }
-
+  spaceName,
+  openItem,
+  selectedItemId,
+}: {
+  items: DisplayWorkItem[]
+  fields: FieldDefinition[]
+  entities: Entity[]
+  spaceName: string
+  openItem: (id: string) => void
+  selectedItemId: string | null
+}) {
   return (
-    <ul className="divide-y divide-border-delicate rounded-xl border border-border-delicate bg-surface-paper">
+    <>
       {items.map((item) => {
         const selected = selectedItemId === item.id
-        const rowTitle = formatSpaceListRowTitle(item, entities, fields, space.name)
+        const rowTitle = formatSpaceListRowTitle(item, entities, fields, spaceName)
         const when = formatSpaceListRowWhen(item)
         return (
           <li key={item.id}>
@@ -93,6 +80,119 @@ export function SpaceTaskList({
           </li>
         )
       })}
+    </>
+  )
+}
+
+export function SpaceTaskList({
+  items,
+  fields,
+  entities,
+  space,
+  childSpaces = [],
+  itemLabel,
+  loading = false,
+}: SpaceTaskListProps) {
+  const { openItem, selectedItemId } = useWorkspaceUi()
+  const plural = `${itemLabel}s`
+
+  if (loading) {
+    return (
+      <div className="space-y-2" aria-busy="true">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-container" />
+        ))}
+      </div>
+    )
+  }
+
+  if (items.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed border-border-delicate bg-surface-paper/50 px-4 py-10 text-center text-sm text-ink-muted">
+        No {plural} yet. Add one above to get started.
+      </p>
+    )
+  }
+
+  if (childSpaces.length > 0) {
+    const childById = new Map(childSpaces.map((s) => [s.id, s]))
+    const groups = new Map<string, DisplayWorkItem[]>()
+    const parentItems: DisplayWorkItem[] = []
+    for (const item of items) {
+      const child = childById.get(item.spaceId)
+      if (child) {
+        const list = groups.get(child.id) ?? []
+        list.push(item)
+        groups.set(child.id, list)
+      } else if (item.spaceId === space.id) {
+        parentItems.push(item)
+      }
+    }
+
+    return (
+      <div className="space-y-6">
+        {childSpaces.map((child) => {
+          const groupItems = groups.get(child.id) ?? []
+          if (groupItems.length === 0) {
+            return null
+          }
+          return (
+            <section key={child.id}>
+              <div className="mb-2 flex items-center gap-2 px-1">
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                  style={{ backgroundColor: spaceDisplayColor(child) }}
+                  aria-hidden
+                >
+                  {spaceNavInitial(child.name)}
+                </span>
+                <h2 className="text-sm font-semibold text-ink-primary">{child.name}</h2>
+                <span className="text-xs text-ink-faint">
+                  {groupItems.length} item{groupItems.length === 1 ? '' : 's'}
+                </span>
+              </div>
+              <ul className="divide-y divide-border-delicate rounded-xl border border-border-delicate bg-surface-paper">
+                <TaskRows
+                  items={groupItems}
+                  fields={fields}
+                  entities={entities}
+                  spaceName={child.name}
+                  openItem={openItem}
+                  selectedItemId={selectedItemId}
+                />
+              </ul>
+            </section>
+          )
+        })}
+        {parentItems.length > 0 ? (
+          <section>
+            <div className="mb-2 px-1 text-sm font-semibold text-ink-muted">Other</div>
+            <ul className="divide-y divide-border-delicate rounded-xl border border-border-delicate bg-surface-paper">
+              <TaskRows
+                items={parentItems}
+                fields={fields}
+                entities={entities}
+                spaceName={space.name}
+                openItem={openItem}
+                selectedItemId={selectedItemId}
+              />
+            </ul>
+          </section>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <ul className="divide-y divide-border-delicate rounded-xl border border-border-delicate bg-surface-paper">
+      <TaskRows
+        items={items}
+        fields={fields}
+        entities={entities}
+        spaceName={space.name}
+        openItem={openItem}
+        selectedItemId={selectedItemId}
+      />
     </ul>
   )
 }

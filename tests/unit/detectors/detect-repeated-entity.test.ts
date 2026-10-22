@@ -48,6 +48,8 @@ describe('detectRepeatedEntity (extraction-based)', () => {
       true
     )
     expect(draft!.operations.some((o) => o.op === 'create_entity')).toBe(true)
+    expect(draft!.operations.some((o) => o.op === 'create_space')).toBe(true)
+    expect(draft!.operations.some((o) => o.op === 'move_work_item_space')).toBe(true)
   })
 
   it('returns null without extractions', () => {

@@ -16,14 +16,15 @@ import { CalendarToolbar } from '@/components/workspace/calendar/calendar-toolba
 import { CalendarWeekView } from '@/components/workspace/calendar/calendar-week-view'
 import { UnscheduledTray } from '@/components/workspace/calendar/unscheduled-tray'
 import { useWorkspaceUi } from '@/components/workspace/workspace-ui-context'
-import type { Entity, FieldDefinition, ViewDefinition, WorkItem } from '@/lib/db/schemas'
+import type { Entity, FieldDefinition, Space, ViewDefinition, WorkItem } from '@/lib/db/schemas'
 import {
   collectColorFilterKeys,
+  colorForFilterKey,
   colorForItemField,
-  colorForSelectValue,
   itemMatchesColorFilter,
   labelForColorKey,
 } from '@/lib/workspace/calendar-colors'
+import { isBuiltinSpaceCalendarViewId } from '@/lib/workspace/builtin-space-views'
 import {
   patchForMoveTimedItem,
   patchForScheduleFromTray,
@@ -44,6 +45,7 @@ type CalendarViewProps = {
   items: WorkItem[]
   fields: FieldDefinition[]
   entities: Entity[]
+  spaces?: Space[]
 }
 
 function defaultColorByKey(view: ViewDefinition, views: ViewDefinition[], fields: FieldDefinition[]): string | null {
@@ -72,7 +74,7 @@ function parseDropTarget(overId: string, data: Record<string, unknown> | undefin
   return null
 }
 
-export function CalendarView({ view, views, items, fields, entities }: CalendarViewProps) {
+export function CalendarView({ view, views, items, fields, entities, spaces = [] }: CalendarViewProps) {
   const router = useRouter()
   const { openItem, showActivityToast } = useWorkspaceUi()
   const [, startTransition] = useTransition()
@@ -93,6 +95,7 @@ export function CalendarView({ view, views, items, fields, entities }: CalendarV
   }, [view.calendarRange])
 
   const entitiesById = useMemo(() => new Map(entities.map((e) => [e.id, e])), [entities])
+  const spacesById = useMemo(() => new Map(spaces.map((s) => [s.id, s])), [spaces])
   const colorByField = fields.find((f) => f.key === colorByKey)
   const colorByOptions = fields.filter((f) => f.type === 'entity' || f.type === 'select')
 
@@ -121,9 +124,9 @@ export function CalendarView({ view, views, items, fields, entities }: CalendarV
       if (!item) {
         return '#6366f1'
       }
-      return colorForItemField(item, colorByField, entitiesById)
+      return colorForItemField(item, colorByField, entitiesById, spacesById)
     },
-    [localItems, colorByField, entitiesById]
+    [localItems, colorByField, entitiesById, spacesById]
   )
 
   const applyPatch = useCallback(
@@ -186,6 +189,9 @@ export function CalendarView({ view, views, items, fields, entities }: CalendarV
 
   const persistRangeMode = (mode: 'week' | 'month') => {
     setRangeMode(mode)
+    if (isBuiltinSpaceCalendarViewId(view.id)) {
+      return
+    }
     startTransition(() => {
       void updateViewSettingsAction({ viewId: view.id, calendarRange: mode })
     })
@@ -194,6 +200,9 @@ export function CalendarView({ view, views, items, fields, entities }: CalendarV
   const persistColorBy = (key: string | null) => {
     setColorByKey(key)
     setActiveFilters(new Set())
+    if (isBuiltinSpaceCalendarViewId(view.id)) {
+      return
+    }
     startTransition(() => {
       void updateViewSettingsAction({ viewId: view.id, colorByField: key })
     })
@@ -231,11 +240,8 @@ export function CalendarView({ view, views, items, fields, entities }: CalendarV
           })
         }}
         filterLabel={(key) => labelForColorKey(key, colorByField, entitiesById)}
-        filterColor={(key) =>
-          key.startsWith('entity:')
-            ? entitiesById.get(key.slice(7))?.color ?? '#6366f1'
-            : colorForSelectValue(key.slice('select:'.length))
-        }
+        filterColor={(key) => colorForFilterKey(key, entitiesById, spacesById)}
+        colorByFieldLabel={colorByField?.label ?? null}
       />
       <div className="flex gap-0">
         {rangeMode === 'week' ? (

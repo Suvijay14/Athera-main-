@@ -87,6 +87,7 @@ function TimedBlock({
     >
       <button type="button" className="block w-full truncate text-left font-medium" onClick={() => onOpenItem(entry.item.id)}>
         {entry.item.title}
+        <span className="font-normal opacity-90"> / {format(entry.start, 'h:mma').toLowerCase()}</span>
       </button>
       <div
         role="separator"

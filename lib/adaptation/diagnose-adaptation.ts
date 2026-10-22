@@ -14,7 +14,6 @@ import type { DetectionContext } from './detector-types'
 import { isWorkspaceInFirstWeek } from './workspace-age'
 import { DETECTORS_IN_ORDER } from './detectors'
 import { isDedupeBlocked } from './detector-utils'
-import { detectCalendarView } from './detectors/detect-calendar-view'
 import { detectRepeatedEntity } from './detectors/detect-repeated-entity'
 import { detectRepeat } from './detectors/detect-repeat'
 import { detectStatusInNotes } from './detectors/detect-status-in-notes'
@@ -173,9 +172,6 @@ export async function buildDetectionContext(
 export function diagnoseAllDetectors(ctx: DetectionContext): DetectorDiagnosis[] {
   return [
     diagnoseRepeatedEntity(ctx),
-    diagnoseSimple('calendar-view', ctx, detectCalendarView, [
-      `Needs ≥8 items in a space with ≥60% dated, and no calendar view yet.`,
-    ]),
     diagnoseSimple('status-in-notes', ctx, detectStatusInNotes, [
       'Looks for status-like words in notes when no status field exists.',
     ]),

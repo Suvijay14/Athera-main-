@@ -29,6 +29,10 @@ export function spaceNotesHref(spaceId: string): string {
   return `/workspace/spaces/${spaceId}/notes`
 }
 
+export function spaceCalendarHref(spaceId: string): string {
+  return `/workspace/spaces/${spaceId}/calendar`
+}
+
 export function spaceEntityHref(spaceId: string, entityId: string): string {
   return `/workspace/spaces/${spaceId}/entities/${entityId}`
 }

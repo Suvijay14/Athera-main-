@@ -36,6 +36,12 @@ import type {
 } from '@/lib/db/schemas'
 import { GoogleCalendarConnection } from '@/components/workspace/google-calendar-connection'
 import type { DisplayWorkItem } from '@/lib/workspace/merge-recurrence-display-items'
+import { RepeatPatternSuggestionCard } from '@/components/adaptation/repeat-pattern-suggestion-card'
+import { builtinSpaceCalendarView } from '@/lib/workspace/builtin-space-views'
+import {
+  describeSpaceAdaptation,
+  formatCreatedByAthera,
+} from '@/lib/workspace/space-attribution'
 import { spaceIconComponent } from '@/lib/workspace/space-icons'
 
 type WorkspaceContentProps = {
@@ -48,23 +54,31 @@ type WorkspaceContentProps = {
   entities: Entity[]
   defaultSpace: Space
   views: ViewDefinition[]
+  /** Built-in List vs Calendar tab (Calendar does not require view_definitions). */
+  spaceView?: 'list' | 'calendar'
   activeViewId: string | null
   userEmail?: string
   pendingSuggestion: Suggestion | null
   activeAdaptationCount: number
   activeChanges: ChangeLogListItem[]
   calendarConnection?: CalendarConnectionSummary | null
+  childSpaces?: Space[]
 }
 
 function ViewBody({
+  spaceView,
   activeViewId,
   views,
   items,
   fields,
   itemLabel,
   entities,
+  spaces,
+  workspaceId,
   currentSpace,
+  childSpaces,
 }: {
+  spaceView: 'list' | 'calendar'
   activeViewId: string | null
   views: ViewDefinition[]
   items: DisplayWorkItem[]
@@ -72,8 +86,25 @@ function ViewBody({
   fields: FieldDefinition[]
   itemLabel: string
   entities: Entity[]
+  spaces: Space[]
+  workspaceId: string
   currentSpace: Space
+  childSpaces: Space[]
 }) {
+  if (spaceView === 'calendar') {
+    const calendarView = builtinSpaceCalendarView(workspaceId)
+    return (
+      <CalendarView
+        view={calendarView}
+        views={views}
+        items={items}
+        fields={fields}
+        entities={entities}
+        spaces={spaces}
+      />
+    )
+  }
+
   if (!activeViewId) {
     return (
       <SpaceTaskList
@@ -81,6 +112,7 @@ function ViewBody({
         fields={fields}
         entities={entities}
         space={currentSpace}
+        childSpaces={childSpaces}
         itemLabel={itemLabel}
       />
     )
@@ -102,6 +134,7 @@ function ViewBody({
         fields={fields}
         entities={entities}
         space={currentSpace}
+        childSpaces={childSpaces}
         itemLabel={itemLabel}
       />
     )
@@ -134,6 +167,7 @@ function ViewBody({
         items={items}
         fields={fields}
         entities={entities}
+        spaces={spaces}
       />
     )
   }
@@ -164,18 +198,27 @@ export function WorkspaceContent({
   entities,
   defaultSpace,
   views,
+  spaceView = 'list',
   activeViewId,
   pendingSuggestion,
   activeAdaptationCount,
   activeChanges,
   recurrenceRules = [],
   calendarConnection = null,
+  childSpaces = [],
 }: WorkspaceContentProps) {
   const [managerOpen, setManagerOpen] = useState(false)
   const itemLabel = workspace.itemLabel
-  const activeView = activeViewId ? views.find((v) => v.id === activeViewId) : undefined
+  const activeView =
+    spaceView === 'calendar'
+      ? builtinSpaceCalendarView(workspace.id)
+      : activeViewId
+        ? views.find((v) => v.id === activeViewId)
+        : undefined
   const SpaceIcon = spaceIconComponent(currentSpace.icon)
   const showPatternSubhead = items.length > 0 && activeAdaptationCount === 0
+  const adaptationDesc = describeSpaceAdaptation(currentSpace, spaces, fields, views)
+  const attributionSubhead = adaptationDesc ? formatCreatedByAthera(adaptationDesc) : null
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 md:px-10">
@@ -197,7 +240,9 @@ export function WorkspaceContent({
           </span>
           <div>
             <h1 className="font-newsreader text-[1.75rem] font-medium text-ink-primary">{currentSpace.name}</h1>
-            {showPatternSubhead ? (
+            {attributionSubhead ? (
+              <p className="mt-1 text-sm text-ink-muted">{attributionSubhead}</p>
+            ) : showPatternSubhead ? (
               <p className="mt-1 text-sm text-ink-muted">
                 Everything you have added. Athera is watching for patterns.
               </p>
@@ -229,6 +274,8 @@ export function WorkspaceContent({
         <SplitSpaceSuggestionCard suggestion={pendingSuggestion} />
       ) : pendingSuggestion?.type === 'repeated-entity' ? (
         <RepeatedEntitySuggestionCard suggestion={pendingSuggestion} />
+      ) : pendingSuggestion?.type === 'repeat-pattern' ? (
+        <RepeatPatternSuggestionCard suggestion={pendingSuggestion} />
       ) : (
         <SuggestionCard suggestion={pendingSuggestion} />
       )}
@@ -239,17 +286,21 @@ export function WorkspaceContent({
         rotatingPlaceholder={items.length === 0}
       />
       <ViewTabs spaceId={currentSpace.id} views={views} />
-      {activeView ? <ViewOpenedTracker view={activeView} /> : null}
+      {activeViewId && activeView ? <ViewOpenedTracker view={activeView} /> : null}
       <div className="flex min-h-0 items-stretch gap-0">
         <div className="min-w-0 flex-1">
           <ViewBody
+            spaceView={spaceView}
             activeViewId={activeViewId}
             views={views}
             items={items}
             fields={fields}
             itemLabel={itemLabel}
             entities={entities}
+            spaces={spaces}
+            workspaceId={workspace.id}
             currentSpace={currentSpace}
+            childSpaces={childSpaces}
           />
         </div>
         <ItemDetailPanelHost

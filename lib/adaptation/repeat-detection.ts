@@ -123,6 +123,9 @@ export function detectRepeatPatterns(input: {
   const recentLimit = addDays(input.now, -RECENT_DAYS)
 
   const candidates = input.items.filter((item) => {
+    if (item.source !== 'manual') {
+      return false
+    }
     if (item.recurrenceId) {
       return false
     }

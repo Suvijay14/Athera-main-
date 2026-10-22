@@ -47,6 +47,14 @@ describe('detectRepeat', () => {
     expect(draft?.confidence).toBe(0.95)
   })
 
+  it('ignores imported items', () => {
+    const items = tuesdaySeries(3, new Date('2026-03-03T12:00:00.000Z')).map((item) => ({
+      ...item,
+      source: 'import' as const,
+    }))
+    expect(detectRepeat(baseContext({ items, now }))).toBeNull()
+  })
+
   it('silent when weekdays mismatch', () => {
     const items = [
       makeItem({ spaceId: SPACE, title: 'Team sync', dueDate: '2026-02-03' }),

@@ -19,6 +19,7 @@ type CalendarToolbarProps = {
   onToggleFilter: (key: string) => void
   filterLabel: (key: string) => string
   filterColor: (key: string) => string
+  colorByFieldLabel?: string | null
 }
 
 export function CalendarToolbar({
@@ -34,6 +35,7 @@ export function CalendarToolbar({
   onToggleFilter,
   filterLabel,
   filterColor,
+  colorByFieldLabel,
 }: CalendarToolbarProps) {
   const title =
     rangeMode === 'week'
@@ -91,7 +93,12 @@ export function CalendarToolbar({
         </div>
       </div>
       {filterKeys.length > 0 ? (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Color filters">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Color filters">
+          {colorByFieldLabel ? (
+            <span className="text-xs text-neutral-600">
+              Colored by {colorByFieldLabel.toLowerCase()}
+            </span>
+          ) : null}
           {filterKeys.map((key) => {
             const active = activeFilters.has(key)
             return (

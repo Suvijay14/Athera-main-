@@ -1,4 +1,6 @@
-import type { Entity, FieldDefinition, WorkItem } from '@/lib/db/schemas'
+import type { Entity, FieldDefinition, Space, WorkItem } from '@/lib/db/schemas'
+
+import { entityDisplayColor } from './space-display-color'
 
 const SELECT_PALETTE = [
   '#6366f1',
@@ -49,21 +51,43 @@ export function colorKeyForItemField(
 export function colorForItemField(
   item: WorkItem,
   field: FieldDefinition | undefined,
-  entitiesById: Map<string, Entity>
+  entitiesById: Map<string, Entity>,
+  spacesById?: Map<string, Space>
 ): string {
   if (!field) {
     return '#6366f1'
   }
   const raw = item.data[field.key]
   if (raw === undefined || raw === null || raw === '') {
+    if (spacesById) {
+      return entityDisplayColor(undefined, spacesById.get(item.spaceId))
+    }
     return '#a3a3a3'
   }
   if (field.type === 'entity' && typeof raw === 'string') {
     const ent = entitiesById.get(raw)
-    return ent?.color ?? '#6366f1'
+    const space = ent ? spacesById?.get(ent.spaceId) : spacesById?.get(item.spaceId)
+    return entityDisplayColor(ent, space)
   }
   if (field.type === 'select') {
     return colorForSelectValue(String(raw))
+  }
+  return '#6366f1'
+}
+
+export function colorForFilterKey(
+  key: string,
+  entitiesById: Map<string, Entity>,
+  spacesById?: Map<string, Space>
+): string {
+  if (key.startsWith('entity:')) {
+    const id = key.slice('entity:'.length)
+    const ent = entitiesById.get(id)
+    const space = ent ? spacesById?.get(ent.spaceId) : undefined
+    return entityDisplayColor(ent, space)
+  }
+  if (key.startsWith('select:')) {
+    return colorForSelectValue(key.slice('select:'.length))
   }
   return '#6366f1'
 }

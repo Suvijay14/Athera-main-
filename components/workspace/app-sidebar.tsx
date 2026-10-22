@@ -19,6 +19,7 @@ import {
   spaceNavInitial,
   topLevelSpaces,
 } from '@/lib/workspace/space-hierarchy'
+import { entityDisplayColor, spaceDisplayColor } from '@/lib/workspace/space-display-color'
 import { spaceEntityHref, spaceListHref } from '@/lib/workspace/home-route'
 import { SPACE_COLOR_SWATCHES, SPACE_ICON_OPTIONS } from '@/lib/workspace/space-icons'
 import { cn } from '@/lib/utils'
@@ -70,6 +71,7 @@ export function AppSidebar({
   const quietSet = useMemo(() => new Set(quietEntityIds), [quietEntityIds])
   const entitiesBySpace = useMemo(() => groupEntitiesBySpace(entities), [entities])
   const childSpacesByParent = useMemo(() => buildChildSpacesByParentId(spaces), [spaces])
+  const spaceById = useMemo(() => new Map(spaces.map((s) => [s.id, s])), [spaces])
 
   useEffect(() => {
     setExpandedSpaceIds((prev) => {
@@ -194,7 +196,7 @@ export function AppSidebar({
                   >
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: space.color ?? '#6366f1' }}
+                      style={{ backgroundColor: spaceDisplayColor(space) }}
                       aria-hidden
                     />
                     <span className="min-w-0 flex-1 truncate">{space.name}</span>
@@ -220,7 +222,7 @@ export function AppSidebar({
                               >
                                 <span
                                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                                  style={{ backgroundColor: child.color ?? '#5c6f84' }}
+                                  style={{ backgroundColor: spaceDisplayColor(child) }}
                                   aria-hidden
                                 >
                                   {initial}
@@ -249,7 +251,12 @@ export function AppSidebar({
                               >
                                 <span
                                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                                  style={{ backgroundColor: entity.color ?? '#5c6f84' }}
+                                  style={{
+                                    backgroundColor: entityDisplayColor(
+                                      entity,
+                                      spaceById.get(entity.spaceId)
+                                    ),
+                                  }}
                                   aria-hidden
                                 >
                                   {initial}

@@ -11,6 +11,7 @@ import { makeItem } from '../detectors/fixtures'
 const spaceA: Space = {
   id: '00000000-0000-4000-8000-000000000010',
   workspaceId: '00000000-0000-4000-8000-000000000099',
+  parentSpaceId: null,
   name: 'Clients',
   icon: null,
   color: null,

@@ -15,6 +15,9 @@ vi.mock('@/lib/db/fields', () => ({ listFields: vi.fn().mockResolvedValue([]) })
 vi.mock('@/lib/db/items', () => ({
   listItems: vi.fn().mockResolvedValue({ items: [], nextCursor: null }),
 }))
+vi.mock('@/lib/db/spaces', () => ({
+  listSpaces: vi.fn().mockResolvedValue([]),
+}))
 vi.mock('@/lib/db/views', () => ({ listViews: vi.fn().mockResolvedValue([]) }))
 vi.mock('@/lib/db/recurrence-rules', () => ({
   listRecurrenceRules: vi.fn().mockResolvedValue([]),

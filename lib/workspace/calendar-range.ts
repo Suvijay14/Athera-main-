@@ -10,7 +10,8 @@ import {
 
 import type { CalendarRange } from './calendar-items'
 
-export const CALENDAR_WEEK_STARTS_ON = 0 as const
+/** Week columns run Mon–Sun (matches product mockups). */
+export const CALENDAR_WEEK_STARTS_ON = 1 as const
 
 export const CALENDAR_VISIBLE_HOUR_START = 6
 export const CALENDAR_VISIBLE_HOUR_END = 22

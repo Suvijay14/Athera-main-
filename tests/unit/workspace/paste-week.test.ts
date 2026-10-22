@@ -19,6 +19,7 @@ const mockSpaces = [
   {
     id: clientsSpaceId,
     workspaceId: '00000000-0000-4000-8000-000000000001',
+    parentSpaceId: null,
     name: 'Clients',
     icon: 'folder',
     color: '#6366f1',
@@ -31,6 +32,7 @@ const mockSpaces = [
   {
     id: personalSpaceId,
     workspaceId: '00000000-0000-4000-8000-000000000001',
+    parentSpaceId: null,
     name: 'Personal',
     icon: 'folder',
     color: '#c49746',

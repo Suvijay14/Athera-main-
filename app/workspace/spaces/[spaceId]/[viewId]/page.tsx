@@ -28,6 +28,7 @@ export default async function SpaceViewPage({ params }: PageProps) {
       entities={data.entities}
       defaultSpace={data.defaultSpace}
       views={data.views}
+      spaceView="list"
       activeViewId={params.viewId}
       userEmail={data.user.email}
       pendingSuggestion={data.pendingSuggestion}
@@ -37,6 +38,7 @@ export default async function SpaceViewPage({ params }: PageProps) {
       calendarConnection={
         data.calendarConnection ? toCalendarConnectionSummary(data.calendarConnection) : null
       }
+      childSpaces={data.childSpaces}
     />
   )
 }

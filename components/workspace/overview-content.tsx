@@ -81,7 +81,9 @@ export function OverviewContent({
             aria-selected={viewMode === 'list'}
             className={cn(
               'rounded-full px-3 py-1.5 font-medium transition-colors',
-              viewMode === 'list' ? 'bg-surface-container text-ink-primary' : 'text-ink-muted hover:text-ink-primary'
+              viewMode === 'list'
+                ? 'bg-surface-container text-ink-primary'
+                : 'text-ink-muted hover:text-ink-primary'
             )}
             onClick={() => setViewMode('list')}
           >

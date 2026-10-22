@@ -13,6 +13,7 @@ import {
 import { previewFromLoadedSuggestion, previewSuggestion } from '@/lib/adaptation/preview'
 import { getLatestChangeLogForSuggestion } from '@/lib/db/change-log'
 import { getSuggestion, markSuggestionShown } from '@/lib/db/suggestions'
+import { scheduleAdaptation } from '@/lib/adaptation/schedule-adaptation'
 import { track } from '@/lib/events'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentWorkspace } from '@/lib/supabase/get-current-workspace'
@@ -25,6 +26,9 @@ export type SuggestionActionResult<T = void> =
 
 function revalidateWorkspacePaths() {
   revalidatePath('/workspace')
+  revalidatePath('/workspace/overview')
+  revalidatePath('/workspace/spaces/[spaceId]', 'page')
+  revalidatePath('/workspace/spaces/[spaceId]/[viewId]', 'page')
   revalidatePath('/workspace/[viewId]', 'page')
   revalidatePath('/workspace/changes')
 }
@@ -105,6 +109,7 @@ export async function acceptSuggestionAction(
       throw new SuggestionStateError('Change log entry missing after accept')
     }
     revalidateWorkspacePaths()
+    scheduleAdaptation(client, workspace.id)
     return { changeLogId: entry.id, summary: preview.summary }
   })
 }

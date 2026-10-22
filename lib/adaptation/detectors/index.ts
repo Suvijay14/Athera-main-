@@ -1,6 +1,5 @@
 import type { DetectionContext, SuggestionDraft } from '@/lib/adaptation/detector-types'
 
-import { detectCalendarView } from './detect-calendar-view'
 import { detectRepeatedEntity } from './detect-repeated-entity'
 import { detectRepeat } from './detect-repeat'
 import { detectStatusInNotes } from './detect-status-in-notes'
@@ -8,7 +7,6 @@ import { detectUnusedField } from './detect-unused-field'
 
 export const DETECTORS_IN_ORDER = [
   detectRepeatedEntity,
-  detectCalendarView,
   detectStatusInNotes,
   detectRepeat,
   detectUnusedField,
@@ -25,7 +23,6 @@ export function runAllDetectors(ctx: DetectionContext): SuggestionDraft[] {
   return drafts
 }
 
-export { detectCalendarView } from './detect-calendar-view'
 export { detectRepeatedEntity } from './detect-repeated-entity'
 export { detectStatusInNotes } from './detect-status-in-notes'
 export { detectRepeat } from './detect-repeat'
