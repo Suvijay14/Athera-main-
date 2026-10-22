@@ -41,7 +41,7 @@ type WorkspaceShellProps = {
 
 export function WorkspaceShell({
   workspaceName,
-  defaultSpaceId,
+  defaultSpaceId: _defaultSpaceId,
   quietEntityIds,
   spaces,
   itemCountsBySpace,
@@ -54,6 +54,7 @@ export function WorkspaceShell({
   embedded = false,
   children,
 }: WorkspaceShellProps) {
+  void _defaultSpaceId
   const [mobileOpen, setMobileOpen] = useState(false)
   const activeSpaces = spaces.filter((s) => !s.archivedAt)
 
@@ -72,7 +73,6 @@ export function WorkspaceShell({
               entities={entities}
               itemCountsBySpace={itemCountsBySpace}
               quietEntityIds={quietEntityIds}
-              defaultSpaceId={defaultSpaceId}
               userEmail={userEmail}
               workspaceName={workspaceName}
               mobileOpen={mobileOpen}

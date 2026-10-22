@@ -19,6 +19,13 @@
       }
     ],
     "paths": {
+      "@/components/landing/*": ["./landing/components/*"],
+      "@/lib/landing/*": ["./landing/lib/*"],
+      "@/components/brand/*": ["./landing/brand/*"],
+      "@/lib/server/waitlist": ["./landing/server/waitlist.ts"],
+      "@/demo-data": ["./landing/data/demoData.ts"],
+      "@/src/components/athera-ui": ["./landing/ui/index.ts"],
+      "@/src/components/athera-ui/*": ["./landing/ui/*"],
       "@/*": ["./*"]
     }
   },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { resolveWorkspaceHomeHref, spaceListHref, spaceViewHref } from '@/lib/workspace/home-route'
+import { WORKSPACE_OVERVIEW_PATH } from '@/lib/routes/product-entry'
 
 describe('resolveWorkspaceHomeHref', () => {
   it('redirects to sole space list when one space', () => {
@@ -8,7 +9,7 @@ describe('resolveWorkspaceHomeHref', () => {
   })
 
   it('redirects to overview when two or more spaces', () => {
-    expect(resolveWorkspaceHomeHref([{ id: 'a' }, { id: 'b' }])).toBe('/')
+    expect(resolveWorkspaceHomeHref([{ id: 'a' }, { id: 'b' }])).toBe(WORKSPACE_OVERVIEW_PATH)
   })
 })
 

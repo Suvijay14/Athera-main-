@@ -23,6 +23,10 @@ function CoreProviders({ children }: { children: React.ReactNode }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const version = useUiVersion()
+  if (pathname === '/') {
+    return <>{children}</>
+  }
+
   const isMinimalShell =
     pathname?.startsWith('/onboarding') ||
     pathname === '/login' ||

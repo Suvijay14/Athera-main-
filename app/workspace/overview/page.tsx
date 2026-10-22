@@ -1,6 +1,6 @@
-import { redirect } from 'next/navigation'
+import { OverviewPageBody } from '@/components/workspace/overview-page-body'
 
-/** Canonical overview is the authenticated home dashboard. */
+/** Overview content; chrome comes from `app/workspace/layout.tsx`. */
 export default function WorkspaceOverviewPage() {
-  redirect('/')
+  return <OverviewPageBody />
 }

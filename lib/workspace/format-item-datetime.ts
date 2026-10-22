@@ -37,6 +37,47 @@ export function formatWorkItemDueCell(dueDate: string | null, startAt: string | 
   }
 }
 
+/** Compact due/time for space list rows (mockup: "Tue 2:00pm", "Fri", "No date"). */
+export function formatWorkItemListWhen(
+  dueDate: string | null,
+  startAt: string | null,
+  endAt: string | null
+): string {
+  if (startAt) {
+    const date = new Date(startAt)
+    if (Number.isNaN(date.getTime())) {
+      return '—'
+    }
+    const day = new Intl.DateTimeFormat('en-US', {
+      timeZone: getDisplayTimeZone(),
+      weekday: 'short',
+    }).format(date)
+    const time = new Intl.DateTimeFormat('en-US', {
+      timeZone: getDisplayTimeZone(),
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+      .format(date)
+      .replace(':00', '')
+      .replace(' AM', 'am')
+      .replace(' PM', 'pm')
+    return `${day} ${time}`
+  }
+  if (dueDate && DATE_ONLY.test(dueDate)) {
+    const d = new Date(`${dueDate}T12:00:00`)
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      weekday: 'short',
+    }).format(d)
+  }
+  if (!dueDate && !startAt) {
+    return 'No date'
+  }
+  void endAt
+  return formatWorkItemDueCell(dueDate, startAt)
+}
+
 export function formatIsoDateTimeForDisplay(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) {

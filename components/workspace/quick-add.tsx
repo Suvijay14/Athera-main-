@@ -61,7 +61,7 @@ export function QuickAdd({
 
   const placeholder = rotatingPlaceholder
     ? quickAddPlaceholderForIndex(placeholderIndex)
-    : `Add a ${itemLabel}…`
+    : '+ Add a task, like: call maria thu 2-3pm'
 
   function submit() {
     const trimmed = title.trim()
@@ -129,7 +129,7 @@ export function QuickAdd({
           type="text"
           disabled={pending}
           placeholder={placeholder}
-          className="relative w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+          className="relative w-full rounded-xl border border-border-delicate bg-surface-paper py-3 pl-4 pr-28 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/25 disabled:opacity-60"
           style={highlight ? { color: 'transparent', caretColor: '#171717' } : undefined}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -140,6 +140,9 @@ export function QuickAdd({
             }
           }}
         />
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-ink-faint">
+          Enter to add
+        </span>
       </div>
       {preview && debouncedTitle === title.trim() ? (
         <p className="mt-2 inline-flex rounded-full bg-neutral-100 px-3 py-1 text-xs text-neutral-700">

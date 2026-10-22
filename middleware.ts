@@ -9,6 +9,7 @@ import {
 import { resolvePostAuthPath } from '@/lib/auth/post-auth-path'
 import { workspaceNeedsOnboarding } from '@/lib/auth/middleware-onboarding'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/supabase/env'
+import { PRODUCT_ENTRY_PATH } from '@/lib/routes/product-entry'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -61,18 +62,6 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicPath(pathname)) {
-    if (!user) {
-      return supabaseResponse
-    }
-    if (pathname === '/') {
-      const needsOnboarding = await workspaceNeedsOnboarding(supabase, user.id)
-      if (needsOnboarding) {
-        const onboardingUrl = request.nextUrl.clone()
-        onboardingUrl.pathname = '/onboarding'
-        onboardingUrl.search = ''
-        return NextResponse.redirect(onboardingUrl)
-      }
-    }
     return supabaseResponse
   }
 
@@ -93,7 +82,7 @@ export async function middleware(request: NextRequest) {
 
   if (!needsOnboarding && pathname.startsWith('/onboarding')) {
     const homeUrl = request.nextUrl.clone()
-    homeUrl.pathname = '/'
+    homeUrl.pathname = PRODUCT_ENTRY_PATH
     homeUrl.search = ''
     return NextResponse.redirect(homeUrl)
   }

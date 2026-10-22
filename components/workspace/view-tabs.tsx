@@ -32,7 +32,7 @@ export function ViewTabs({ spaceId, views, notesActive }: ViewTabsProps) {
         )}
         aria-current={onAll ? 'page' : undefined}
       >
-        All
+        List
       </Link>
       <Link
         href={notesHref}

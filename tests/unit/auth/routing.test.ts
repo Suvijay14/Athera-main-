@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { isAuthEntryPath, isAuthExemptApiPath, isPublicPath } from '@/lib/auth/public-paths'
 import { resolvePostAuthPath } from '@/lib/auth/post-auth-path'
 import { ONBOARDING_V1_COMPLETE_KEY } from '@/lib/onboarding/persona'
+import { PRODUCT_ENTRY_PATH } from '@/lib/routes/product-entry'
 
 describe('auth public paths', () => {
   it('treats landing and auth pages as public', () => {
@@ -31,6 +32,6 @@ describe('resolvePostAuthPath', () => {
   })
 
   it('sends completed onboarding to home dashboard', () => {
-    expect(resolvePostAuthPath({ [ONBOARDING_V1_COMPLETE_KEY]: true })).toBe('/')
+    expect(resolvePostAuthPath({ [ONBOARDING_V1_COMPLETE_KEY]: true })).toBe(PRODUCT_ENTRY_PATH)
   })
 })

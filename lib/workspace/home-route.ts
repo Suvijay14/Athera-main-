@@ -1,4 +1,5 @@
 import type { Space } from '@/lib/db/schemas'
+import { WORKSPACE_OVERVIEW_PATH } from '@/lib/routes/product-entry'
 
 /**
  * Where /workspace should redirect (server-side, no client flash).
@@ -9,11 +10,11 @@ export function resolveWorkspaceHomeHref(spaces: Pick<Space, 'id'>[]): string {
   if (active.length <= 1) {
     const only = active[0]
     if (!only) {
-      return '/'
+      return WORKSPACE_OVERVIEW_PATH
     }
     return `/workspace/spaces/${only.id}`
   }
-  return '/'
+  return WORKSPACE_OVERVIEW_PATH
 }
 
 export function spaceListHref(spaceId: string): string {

@@ -104,3 +104,32 @@ body.ui-v1 {
     animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
+
+/* Marketing landing (`landing/`) */
+.landing-page {
+  --border: #e6e1d6;
+  background-color: #fbf9f5;
+}
+
+.landing-section {
+  background-color: #fbf9f5;
+}
+
+.landing-section-alt {
+  background-color: #f4f1ea;
+}
+
+.landing-hero-grid {
+  background-color: #fbf9f5;
+  background-image: radial-gradient(
+    ellipse 80% 60% at 50% -10%,
+    rgba(78, 100, 76, 0.08),
+    transparent 70%
+  );
+}
+
+@layer components {
+  .landing-card {
+    @apply bg-surface-paper border border-border-delicate rounded-lg shadow-card;
+  }
+}

@@ -11,7 +11,7 @@ import GlobalSearchBar from '@/components/v2/GlobalSearchBar'
 import { useShell } from '@/components/v2/shell/ShellContext'
 
 function breadcrumbLabel(pathname: string): { section: string; page: string } {
-  if (pathname === '/') return { section: 'Overview', page: 'Needs you' }
+  if (pathname === '/workspace/overview') return { section: 'Overview', page: 'Needs you' }
   if (pathname.startsWith('/workspace')) return { section: 'Workspace', page: 'Space' }
   if (pathname === '/school') return { section: 'School', page: 'Workspace' }
   if (pathname === '/work') return { section: 'Work', page: 'Workspace' }

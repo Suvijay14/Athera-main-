@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
 import { OverviewNeedsYouPanel } from '@/components/workspace/overview-needs-you-panel'
+import { OverviewPasteWeekCard } from '@/components/workspace/overview-paste-week-card'
 import { OverviewWeekCalendar } from '@/components/workspace/overview-week-calendar'
 import { UnsortedItemsRow } from '@/components/workspace/unsorted-items-row'
 import type { Space, Suggestion, WorkItem, Workspace } from '@/lib/db/schemas'
@@ -102,6 +103,8 @@ export function OverviewContent({
           </button>
         </div>
       </header>
+
+      <OverviewPasteWeekCard />
 
       <UnsortedItemsRow
         items={items}

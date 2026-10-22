@@ -4,65 +4,68 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { scheduleAdaptation } from '@/lib/adaptation/schedule-adaptation'
-import { assertCanCreateItem } from '@/app/workspace/account-actions'
-import { createItem } from '@/lib/db/items'
-import { track } from '@/lib/events'
-import { parsePasteWeekLines } from '@/lib/workspace/paste-week'
+import { createWorkItemAction } from '@/app/workspace/actions'
+import { listFields } from '@/lib/db/fields'
+import { entityFieldKeys } from '@/lib/workspace/entity-items'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentWorkspace } from '@/lib/supabase/get-current-workspace'
 
-const pasteSchema = z.object({
+const confirmRowSchema = z.object({
+  title: z.string().trim().min(1),
   spaceId: z.string().uuid(),
-  text: z.string().min(1),
+  dueDate: z.string().nullable().optional(),
+  startAt: z.string().nullable().optional(),
+  endAt: z.string().nullable().optional(),
+  allDay: z.boolean().optional(),
+  entityId: z.string().uuid().nullable().optional(),
 })
 
-export type PasteWeekActionResult =
+const confirmSchema = z.object({
+  rows: z.array(confirmRowSchema).min(1),
+})
+
+export type PasteWeekConfirmResult =
   | { ok: true; createdCount: number }
   | { ok: false; code: 'upgrade_required'; message: string }
   | { ok: false; code: 'validation'; message: string }
 
-export async function pasteWeekAction(raw: z.infer<typeof pasteSchema>): Promise<PasteWeekActionResult> {
-  const parsed = pasteSchema.parse(raw)
-  const { workspace, user } = await getCurrentWorkspace()
+export async function confirmPasteWeekAction(raw: z.infer<typeof confirmSchema>): Promise<PasteWeekConfirmResult> {
+  const parsed = confirmSchema.parse(raw)
+  const { workspace } = await getCurrentWorkspace()
   const client = await createClient()
-  const now = new Date()
-  const rows = parsePasteWeekLines(parsed.text, now)
-
-  if (rows.length === 0) {
-    return { ok: false, code: 'validation', message: 'No lines to import.' }
-  }
+  const fields = await listFields(client, workspace.id)
+  const keys = entityFieldKeys(fields)
+  const primaryEntityKey = keys[0] ?? null
 
   let createdCount = 0
-  for (const row of rows) {
-    const gate = await assertCanCreateItem()
-    if (!gate.ok) {
+  for (const row of parsed.rows) {
+    const data: Record<string, unknown> = {}
+    if (primaryEntityKey && row.entityId) {
+      data[primaryEntityKey] = row.entityId
+    }
+
+    const result = await createWorkItemAction({
+      title: row.title,
+      spaceId: row.spaceId,
+      dueDate: row.dueDate ?? null,
+      startAt: row.startAt ?? null,
+      endAt: row.endAt ?? null,
+      allDay: row.allDay ?? false,
+      data,
+      source: 'import',
+    })
+    if (!result.ok) {
       if (createdCount === 0) {
-        return { ok: false, code: 'upgrade_required', message: gate.message }
+        return { ok: false, code: 'upgrade_required', message: result.message }
       }
       break
     }
-
-    await createItem(client, workspace.id, {
-      title: row.title,
-      spaceId: parsed.spaceId,
-      dueDate: row.dueDate,
-      startAt: row.startAt,
-      endAt: row.endAt,
-      allDay: row.allDay,
-      data: row.data ?? {},
-      source: 'manual',
-    })
     createdCount += 1
-
-    await track(client, {
-      workspaceId: workspace.id,
-      userId: user.id,
-      name: 'item_created',
-      props: { method: 'paste' },
-    })
   }
 
   scheduleAdaptation(client, workspace.id)
   revalidatePath('/workspace', 'layout')
+  revalidatePath('/')
+  revalidatePath('/workspace/paste-week')
   return { ok: true, createdCount }
 }

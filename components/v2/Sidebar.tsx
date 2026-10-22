@@ -153,10 +153,10 @@ export default function Sidebar() {
         )}
 
         {navLink({
-          href: '/',
+          href: '/workspace/overview',
           label: 'Overview',
           icon: 'dashboard',
-          active: pathname === '/' || pathname === '/workspace/overview',
+          active: pathname === '/workspace/overview',
           sub: collapsed ? undefined : 'Needs you',
         })}
 

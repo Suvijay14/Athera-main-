@@ -17,12 +17,16 @@ type WorkspaceTopBarProps = {
 }
 
 function breadcrumb(pathname: string, spaces: Space[]): string {
-  const overview = pathname === '/' || pathname === '/workspace/overview' || pathname === '/workspace'
+  const overview =
+    pathname === '/workspace/overview' || pathname === '/workspace'
   if (overview) {
     return 'Overview'
   }
   if (pathname === '/workspace/changes') {
     return 'Change history'
+  }
+  if (pathname === '/workspace/paste-week' || pathname.startsWith('/workspace/paste-week/')) {
+    return 'Paste your week'
   }
   const spaceMatch = /^\/workspace\/spaces\/([^/]+)/.exec(pathname)
   if (spaceMatch) {
@@ -51,12 +55,12 @@ function avatarInitials(email?: string): string {
 export function WorkspaceTopBar({ spaces, userEmail }: WorkspaceTopBarProps) {
   const pathname = usePathname() ?? ''
   const inputRef = useRef<HTMLInputElement>(null)
-  const { commandQuery, setCommandQuery, openCommandBar, closeCommandBar, commandBarOpen } =
+  const { commandQuery, setCommandQuery, openCommandBar, closeCommandBar, commandBarOpen, breadcrumbLabel } =
     useWorkspaceUi()
   const { busy, submitQuery } = useWorkspaceCommandActionsContext()
 
   const activeSpaces = useMemo(() => spaces.filter((s) => !s.archivedAt), [spaces])
-  const crumb = breadcrumb(pathname, activeSpaces)
+  const crumb = breadcrumbLabel ?? breadcrumb(pathname, activeSpaces)
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

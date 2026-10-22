@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Menu, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, FileText, Menu, X } from 'lucide-react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 
 import {
@@ -23,7 +23,6 @@ type AppSidebarProps = {
   entities: Entity[]
   itemCountsBySpace: Record<string, number>
   quietEntityIds: string[]
-  defaultSpaceId: string
   userEmail?: string
   workspaceName: string
   mobileOpen: boolean
@@ -49,7 +48,6 @@ export function AppSidebar({
   entities,
   itemCountsBySpace,
   quietEntityIds,
-  defaultSpaceId,
   workspaceName,
   mobileOpen,
   onMobileOpenChange,
@@ -80,7 +78,7 @@ export function AppSidebar({
   }, [spaces, entitiesBySpace])
   const activeSpaces = spaces.filter((s) => !s.archivedAt)
   const archivedSpaces = spaces.filter((s) => s.archivedAt)
-  const pasteWeekHref = `${spaceListHref(defaultSpaceId)}?pasteWeek=1`
+  const pasteWeekHref = '/workspace/paste-week'
 
   function closeMobile() {
     onMobileOpenChange(false)
@@ -335,8 +333,9 @@ export function AppSidebar({
         <Link
           href={pasteWeekHref}
           onClick={closeMobile}
-          className={navLinkClass(pathname.includes('pasteWeek=1') || pathname.includes('paste-week'))}
+          className={cn(navLinkClass(pathname === pasteWeekHref || pathname.startsWith(`${pasteWeekHref}/`)), 'flex items-center gap-2')}
         >
+          <FileText size={16} className="shrink-0 opacity-70" aria-hidden />
           Paste your week
         </Link>
         <button

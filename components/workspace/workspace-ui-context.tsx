@@ -28,6 +28,8 @@ type WorkspaceUiContextValue = {
   commandQuery: string
   setCommandQuery: (query: string) => void
   showActivityToast: (summary: string) => void
+  breadcrumbLabel: string | null
+  setBreadcrumbLabel: (label: string | null) => void
 }
 
 const WorkspaceUiContext = createContext<WorkspaceUiContextValue | null>(null)
@@ -38,6 +40,7 @@ export function WorkspaceUiProvider({ children }: { children: ReactNode }) {
   const [commandCreateMode, setCommandCreateMode] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
   const [activityToast, setActivityToast] = useState<ActiveAdaptationToast | null>(null)
+  const [breadcrumbLabel, setBreadcrumbLabel] = useState<string | null>(null)
 
   const showActivityToast = useCallback((summary: string) => {
     setActivityToast({
@@ -103,6 +106,8 @@ export function WorkspaceUiProvider({ children }: { children: ReactNode }) {
       commandQuery,
       setCommandQuery,
       showActivityToast,
+      breadcrumbLabel,
+      setBreadcrumbLabel,
     }),
     [
       selectedItemId,
@@ -114,6 +119,7 @@ export function WorkspaceUiProvider({ children }: { children: ReactNode }) {
       commandCreateMode,
       commandQuery,
       showActivityToast,
+      breadcrumbLabel,
     ]
   )
 

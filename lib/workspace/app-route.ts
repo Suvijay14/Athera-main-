@@ -3,8 +3,5 @@ export function usesWorkspaceChrome(pathname: string | null | undefined): boolea
   if (!pathname) {
     return false
   }
-  if (pathname === '/') {
-    return true
-  }
   return pathname.startsWith('/workspace')
 }

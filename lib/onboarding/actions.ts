@@ -15,6 +15,7 @@ import {
 } from '@/lib/onboarding/persona'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentWorkspace } from '@/lib/supabase/get-current-workspace'
+import { PRODUCT_ENTRY_PATH } from '@/lib/routes/product-entry'
 
 const completeSchema = z.object({
   persona: onboardingPersonaSchema.optional(),
@@ -59,7 +60,7 @@ export async function completeOnboardingPersonaAction(
     props: { persona, skipped: parsed.skipped ?? false },
   })
 
-  redirect('/')
+  redirect(PRODUCT_ENTRY_PATH)
 }
 
 export async function skipOnboardingToWorkspaceAction(): Promise<void> {
@@ -103,5 +104,5 @@ export async function completeBrainDumpOnboardingAction(
     props: { skipped: false, brain_dump: true },
   })
 
-  redirect('/')
+  redirect(PRODUCT_ENTRY_PATH)
 }

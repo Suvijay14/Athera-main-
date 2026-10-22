@@ -9,6 +9,7 @@ import { CalendarView } from '@/components/workspace/calendar/calendar-view'
 import { FieldManager } from '@/components/workspace/field-manager'
 import { GroupedView } from '@/components/workspace/grouped-view'
 import { ArchiveSuggestionCard } from '@/components/adaptation/archive-suggestion-card'
+import { RepeatedEntitySuggestionCard } from '@/components/adaptation/repeated-entity-suggestion-card'
 import { SplitSpaceSuggestionCard } from '@/components/adaptation/split-space-suggestion-card'
 import { SuggestionCard } from '@/components/adaptation/suggestion-card'
 import { LearningIndicator } from '@/components/workspace/learning-indicator'
@@ -17,6 +18,9 @@ import { QuickAdd } from '@/components/workspace/quick-add'
 import { SidebarSpaceActions } from '@/components/workspace/app-sidebar'
 import { ViewOpenedTracker } from '@/components/workspace/view-opened-tracker'
 import { ViewTabs } from '@/components/workspace/view-tabs'
+import { PasteWeekImportToast } from '@/components/workspace/paste-week-import-toast'
+import { SpaceTaskList } from '@/components/workspace/space-task-list'
+import { WorkspaceBreadcrumbSync } from '@/components/workspace/workspace-breadcrumb-sync'
 import { WorkItemList } from '@/components/workspace/work-item-list'
 import { Button } from '@/components/ctc/ui/Button'
 import type { ChangeLogListItem } from '@/lib/db/change-log'
@@ -31,7 +35,6 @@ import type {
   Workspace,
 } from '@/lib/db/schemas'
 import { GoogleCalendarConnection } from '@/components/workspace/google-calendar-connection'
-import { PasteWeekStrip } from '@/components/workspace/paste-week-strip'
 import type { DisplayWorkItem } from '@/lib/workspace/merge-recurrence-display-items'
 import { spaceIconComponent } from '@/lib/workspace/space-icons'
 
@@ -60,6 +63,7 @@ function ViewBody({
   fields,
   itemLabel,
   entities,
+  currentSpace,
 }: {
   activeViewId: string | null
   views: ViewDefinition[]
@@ -68,10 +72,17 @@ function ViewBody({
   fields: FieldDefinition[]
   itemLabel: string
   entities: Entity[]
+  currentSpace: Space
 }) {
   if (!activeViewId) {
     return (
-      <WorkItemList items={items} fields={fields} itemLabel={itemLabel} entities={entities} />
+      <SpaceTaskList
+        items={items}
+        fields={fields}
+        entities={entities}
+        space={currentSpace}
+        itemLabel={itemLabel}
+      />
     )
   }
 
@@ -86,7 +97,13 @@ function ViewBody({
 
   if (view.type === 'list') {
     return (
-      <WorkItemList items={items} fields={fields} itemLabel={itemLabel} entities={entities} />
+      <SpaceTaskList
+        items={items}
+        fields={fields}
+        entities={entities}
+        space={currentSpace}
+        itemLabel={itemLabel}
+      />
     )
   }
 
@@ -158,9 +175,12 @@ export function WorkspaceContent({
   const itemLabel = workspace.itemLabel
   const activeView = activeViewId ? views.find((v) => v.id === activeViewId) : undefined
   const SpaceIcon = spaceIconComponent(currentSpace.icon)
+  const showPatternSubhead = items.length > 0 && activeAdaptationCount === 0
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 md:px-8">
+    <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 md:px-10">
+      <WorkspaceBreadcrumbSync spaceName={currentSpace.name} activeView={activeView ?? null} />
+      <PasteWeekImportToast />
       <Suspense fallback={null}>
         <OpenItemFromQuery />
       </Suspense>
@@ -176,8 +196,14 @@ export function WorkspaceContent({
             <SpaceIcon size={20} aria-hidden />
           </span>
           <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">{currentSpace.name}</h1>
-            <p className="mt-1 text-sm text-neutral-600">{workspace.name}</p>
+            <h1 className="font-newsreader text-[1.75rem] font-medium text-ink-primary">{currentSpace.name}</h1>
+            {showPatternSubhead ? (
+              <p className="mt-1 text-sm text-ink-muted">
+                Everything you have added. Athera is watching for patterns.
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-ink-muted">{workspace.name}</p>
+            )}
             <SidebarSpaceActions space={currentSpace} />
           </div>
         </div>
@@ -190,15 +216,19 @@ export function WorkspaceContent({
         <GoogleCalendarConnection spaceId={currentSpace.id} connection={calendarConnection} />
       </Suspense>
 
-      <LearningIndicator
-        itemCount={items.length}
-        activeAdaptationCount={activeAdaptationCount}
-        activeChanges={activeChanges}
-      />
+      {!showPatternSubhead ? (
+        <LearningIndicator
+          itemCount={items.length}
+          activeAdaptationCount={activeAdaptationCount}
+          activeChanges={activeChanges}
+        />
+      ) : null}
       {pendingSuggestion?.type === 'archive-entities' ? (
         <ArchiveSuggestionCard suggestion={pendingSuggestion} />
       ) : pendingSuggestion?.type === 'split_space' ? (
         <SplitSpaceSuggestionCard suggestion={pendingSuggestion} />
+      ) : pendingSuggestion?.type === 'repeated-entity' ? (
+        <RepeatedEntitySuggestionCard suggestion={pendingSuggestion} />
       ) : (
         <SuggestionCard suggestion={pendingSuggestion} />
       )}
@@ -208,13 +238,6 @@ export function WorkspaceContent({
         autoFocus={items.length === 0}
         rotatingPlaceholder={items.length === 0}
       />
-      <Suspense fallback={null}>
-        <PasteWeekStrip
-          spaceId={currentSpace.id}
-          itemCount={items.length}
-          calendarConnectHref={`/api/integrations/google-calendar/connect?spaceId=${encodeURIComponent(currentSpace.id)}`}
-        />
-      </Suspense>
       <ViewTabs spaceId={currentSpace.id} views={views} />
       {activeView ? <ViewOpenedTracker view={activeView} /> : null}
       <div className="flex min-h-0 items-stretch gap-0">
@@ -226,6 +249,7 @@ export function WorkspaceContent({
             fields={fields}
             itemLabel={itemLabel}
             entities={entities}
+            currentSpace={currentSpace}
           />
         </div>
         <ItemDetailPanelHost
